@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.navbatchilik.app-mergeDebugResources-26:/values-tl/values-tl.xml",
+            "outputFile": "com.navbatchilik.app-mergeDebugResources-27:/values-tl/values-tl.xml",
             "map": [
                 {
                     "source": "C:\\Users\\orifx\\.gradle\\caches\\transforms-3\\38fdf4e56534b3c4c6a8297bf7eeddee\\transformed\\appcompat-1.6.1\\res\\values-tl\\values-tl.xml",

@@ -1,3 +1,15 @@
+"""
+============================================================================
+NAVBATCHILIK - Yotoqxona Navbatchilik Tizimi
+============================================================================
+
+Copyright (c) 2024 Orifxon Marufxonov
+Barcha huquqlar himoyalangan / All Rights Reserved
+
+Bog'lanish: @Sheeyh_o5 (Telegram)
+============================================================================
+"""
+
 import streamlit as st
 import pandas as pd
 from datetime import datetime, timedelta
@@ -29,6 +41,100 @@ def send_to_ttj_group(message):
         }, timeout=5)
     except:
         pass
+
+# ============================================================================
+# XAVFSIZLIK TIZIMI / SECURITY SYSTEM
+# Copyright (c) 2024 Orifxon Marufxonov
+# ============================================================================
+
+# Xavfsizlik sozlamalari
+MAX_LOGIN_ATTEMPTS = 5  # Maksimal urinishlar soni
+BLOCK_TIME_MINUTES = 30  # Bloklash vaqti (daqiqa)
+ALERT_THRESHOLD = 3  # Ogohlantirishdan oldin urinishlar
+
+def get_security_state():
+    """Xavfsizlik holatini olish"""
+    if "login_attempts" not in st.session_state:
+        st.session_state.login_attempts = 0
+    if "blocked_until" not in st.session_state:
+        st.session_state.blocked_until = None
+    if "last_attempt_time" not in st.session_state:
+        st.session_state.last_attempt_time = None
+    return st.session_state
+
+def is_blocked():
+    """Foydalanuvchi bloklangan yoki yo'qligini tekshirish"""
+    state = get_security_state()
+    if state.blocked_until:
+        if datetime.now() < state.blocked_until:
+            return True
+        else:
+            # Bloklash muddati tugadi
+            state.blocked_until = None
+            state.login_attempts = 0
+    return False
+
+def record_failed_login():
+    """Muvaffaqiyatsiz kirishni qayd qilish"""
+    state = get_security_state()
+    state.login_attempts += 1
+    state.last_attempt_time = datetime.now()
+    
+    # Ogohlantirishni yuborish
+    if state.login_attempts >= ALERT_THRESHOLD:
+        send_security_alert(state.login_attempts)
+    
+    # Maksimal urinishlardan oshsa bloklash
+    if state.login_attempts >= MAX_LOGIN_ATTEMPTS:
+        state.blocked_until = datetime.now() + timedelta(minutes=BLOCK_TIME_MINUTES)
+        send_block_alert()
+
+def reset_login_attempts():
+    """Muvaffaqiyatli kirishdan keyin urinishlarni tozalash"""
+    state = get_security_state()
+    state.login_attempts = 0
+    state.blocked_until = None
+
+def send_security_alert(attempts):
+    """Xavfsizlik ogohlantirishi yuborish"""
+    msg = f"""🚨 XAVFSIZLIK OGOHLANTIRISHI!
+
+⚠️ Shubhali faoliyat aniqlandi!
+📊 Noto'g'ri parol urinishlari: {attempts}
+🕐 Vaqt: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+
+Agar bu siz bo'lmasangiz, parolni o'zgartiring!"""
+    send_telegram_alert(msg)
+
+def send_block_alert():
+    """Bloklash haqida xabar yuborish"""
+    msg = f"""🔒 FOYDALANUVCHI BLOKLANDI!
+
+❌ {MAX_LOGIN_ATTEMPTS} marta noto'g'ri parol kiritildi
+⏱️ Bloklash muddati: {BLOCK_TIME_MINUTES} daqiqa
+🕐 Vaqt: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+
+Ehtimol brute-force hujumi!"""
+    send_telegram_alert(msg)
+
+def send_successful_login_alert():
+    """Muvaffaqiyatli kirish haqida xabar"""
+    msg = f"""✅ TIZIMGA KIRISH
+
+🕐 Vaqt: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+📱 Kimdir tizimga kirdi!
+
+Agar bu siz bo'lmasangiz - darhol parolni o'zgartiring!"""
+    send_telegram_alert(msg)
+
+def log_activity(action, details=""):
+    """Muhim faoliyatni qayd qilish va xabar yuborish"""
+    msg = f"""📋 FAOLIYAT LOGI
+
+📌 Harakat: {action}
+📝 Tafsilotlar: {details}
+🕐 Vaqt: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"""
+    send_telegram_alert(msg)
 
 # --- KONFIGURATSIYA ---
 GOOGLE_SHEET_NAME = "Navbatchilik_Jadvali"
@@ -96,9 +202,24 @@ def get_client():
 
 def check_password():
     """Returns `True` if the user had the correct password."""
+    
+    # Query params orqali sessiyani saqlash
+    if "auth" in st.query_params:
+        if st.query_params["auth"] == "ok":
+            st.session_state["password_correct"] = True
+            return True
 
     if st.session_state.get("password_correct", False):
         return True
+    
+    # Bloklash tekshiruvi
+    if is_blocked():
+        state = get_security_state()
+        remaining = state.blocked_until - datetime.now()
+        minutes_left = int(remaining.total_seconds() / 60) + 1
+        st.error(f"🔒 Siz {minutes_left} daqiqaga bloklangansiz! Keyinroq urinib ko'ring.")
+        st.warning(f"⚠️ Sabab: Juda ko'p noto'g'ri parol urinishlari")
+        return False
 
     # Rasmni base64 ga o'tkazish
     import base64
@@ -156,6 +277,13 @@ def check_password():
         st.markdown('<p class="login-title">🔒 Tizimga kirish</p>', unsafe_allow_html=True)
         st.markdown('<p class="login-subtitle">TTJ Yotoqxona Navbatchilik Tizimi</p>', unsafe_allow_html=True)
         
+        # Qolgan urinishlar haqida ogohlantirish
+        state = get_security_state()
+        if state.login_attempts > 0:
+            remaining_attempts = MAX_LOGIN_ATTEMPTS - state.login_attempts
+            if remaining_attempts <= 3:
+                st.warning(f"⚠️ Qolgan urinishlar: {remaining_attempts}")
+        
         # Form (Enter bilan ishlaydi)
         with st.form("login_form"):
             password = st.text_input("Parolni kiriting", type="password", placeholder="Parolni kiriting va Enter bosing...", label_visibility="collapsed")
@@ -164,10 +292,15 @@ def check_password():
             if submit_button:
                 # Parolni tekshirish (bo'sh joylarni olib tashlab)
                 if password.strip() == st.secrets["password"]:
+                    reset_login_attempts()
+                    send_successful_login_alert()
                     st.session_state["password_correct"] = True
+                    st.query_params["auth"] = "ok"
                     st.rerun()
                 else:
+                    record_failed_login()
                     st.error("😕 Parol xato! Qaytadan urinib ko'ring.")
+                    st.rerun()
         
         st.markdown('</div>', unsafe_allow_html=True)
                 

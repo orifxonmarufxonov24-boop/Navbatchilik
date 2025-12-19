@@ -8,6 +8,7 @@ MERGED from [com.google.android.material:material:1.9.0] C:\Users\orifx\.gradle\
 MERGED from [androidx.appcompat:appcompat-resources:1.6.1] C:\Users\orifx\.gradle\caches\transforms-3\a6e5f6212cc01c97226962f50ee2288b\transformed\jetified-appcompat-resources-1.6.1\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.constraintlayout:constraintlayout:2.0.1] C:\Users\orifx\.gradle\caches\transforms-3\325512355f8393cf17223d1f0797ac0a\transformed\constraintlayout-2.0.1\AndroidManifest.xml:2:1-11:12
 MERGED from [androidx.appcompat:appcompat:1.6.1] C:\Users\orifx\.gradle\caches\transforms-3\38fdf4e56534b3c4c6a8297bf7eeddee\transformed\appcompat-1.6.1\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.swiperefreshlayout:swiperefreshlayout:1.1.0] C:\Users\orifx\.gradle\caches\transforms-3\b795e3921e968fb1a833b425fd1259e9\transformed\swiperefreshlayout-1.1.0\AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.viewpager2:viewpager2:1.0.0] C:\Users\orifx\.gradle\caches\transforms-3\00ea7e51c12fccdef9077ec0f77a3539\transformed\jetified-viewpager2-1.0.0\AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.fragment:fragment:1.3.6] C:\Users\orifx\.gradle\caches\transforms-3\c3dc071c2c0ff1053390120e17d4afaf\transformed\fragment-1.3.6\AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.activity:activity:1.6.0] C:\Users\orifx\.gradle\caches\transforms-3\fd3281d44bb7eecb7926d2ce14691f6f\transformed\jetified-activity-1.6.0\AndroidManifest.xml:17:1-22:12
@@ -33,13 +34,13 @@ MERGED from [androidx.lifecycle:lifecycle-process:2.4.1] C:\Users\orifx\.gradle\
 MERGED from [androidx.lifecycle:lifecycle-runtime:2.5.1] C:\Users\orifx\.gradle\caches\transforms-3\0a1320c1195c365e653e08562a930f48\transformed\lifecycle-runtime-2.5.1\AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.savedstate:savedstate:1.2.0] C:\Users\orifx\.gradle\caches\transforms-3\3b0e0d34e3a4e54dfd346d951a266594\transformed\jetified-savedstate-1.2.0\AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.cardview:cardview:1.0.0] C:\Users\orifx\.gradle\caches\transforms-3\c8bdece1432d6bd447ee6e396aae1f67\transformed\cardview-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.interpolator:interpolator:1.0.0] C:\Users\orifx\.gradle\caches\transforms-3\a3361067d52275e58bda1185bd0e0722\transformed\interpolator-1.0.0\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\orifx\.gradle\caches\transforms-3\0d338db99dbee4b2179b8774b799ae6a\transformed\jetified-startup-runtime-1.1.1\AndroidManifest.xml:17:1-33:12
 MERGED from [androidx.tracing:tracing:1.0.0] C:\Users\orifx\.gradle\caches\transforms-3\85cd030943f9498f5b64cfe78341395f\transformed\jetified-tracing-1.0.0\AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\orifx\.gradle\caches\transforms-3\b21884de3c1fed91191658c9c59e73bb\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:17:1-27:12
 MERGED from [androidx.lifecycle:lifecycle-livedata:2.0.0] C:\Users\orifx\.gradle\caches\transforms-3\e7095238723e57e082dabffd1a6a9e1d\transformed\lifecycle-livedata-2.0.0\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.5.1] C:\Users\orifx\.gradle\caches\transforms-3\d2b78ee51ff8035d4eb23d64df7819c9\transformed\lifecycle-livedata-core-2.5.1\AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.arch.core:core-runtime:2.1.0] C:\Users\orifx\.gradle\caches\transforms-3\1ba6e62301e30dc0f6717cc5fa502dec\transformed\core-runtime-2.1.0\AndroidManifest.xml:17:1-24:12
-MERGED from [androidx.interpolator:interpolator:1.0.0] C:\Users\orifx\.gradle\caches\transforms-3\a3361067d52275e58bda1185bd0e0722\transformed\interpolator-1.0.0\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.documentfile:documentfile:1.0.0] C:\Users\orifx\.gradle\caches\transforms-3\b7916a1392bbb1cace393bfa310f2e1c\transformed\documentfile-1.0.0\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.localbroadcastmanager:localbroadcastmanager:1.0.0] C:\Users\orifx\.gradle\caches\transforms-3\5271149ab19ed6165189410cef969bfe\transformed\localbroadcastmanager-1.0.0\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.print:print:1.0.0] C:\Users\orifx\.gradle\caches\transforms-3\ae6d865693f1ebb006f8a0018c2b43a8\transformed\print-1.0.0\AndroidManifest.xml:17:1-22:12
@@ -129,6 +130,8 @@ MERGED from [androidx.constraintlayout:constraintlayout:2.0.1] C:\Users\orifx\.g
 MERGED from [androidx.constraintlayout:constraintlayout:2.0.1] C:\Users\orifx\.gradle\caches\transforms-3\325512355f8393cf17223d1f0797ac0a\transformed\constraintlayout-2.0.1\AndroidManifest.xml:5:5-7:41
 MERGED from [androidx.appcompat:appcompat:1.6.1] C:\Users\orifx\.gradle\caches\transforms-3\38fdf4e56534b3c4c6a8297bf7eeddee\transformed\appcompat-1.6.1\AndroidManifest.xml:20:5-44
 MERGED from [androidx.appcompat:appcompat:1.6.1] C:\Users\orifx\.gradle\caches\transforms-3\38fdf4e56534b3c4c6a8297bf7eeddee\transformed\appcompat-1.6.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.swiperefreshlayout:swiperefreshlayout:1.1.0] C:\Users\orifx\.gradle\caches\transforms-3\b795e3921e968fb1a833b425fd1259e9\transformed\swiperefreshlayout-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.swiperefreshlayout:swiperefreshlayout:1.1.0] C:\Users\orifx\.gradle\caches\transforms-3\b795e3921e968fb1a833b425fd1259e9\transformed\swiperefreshlayout-1.1.0\AndroidManifest.xml:20:5-22:41
 MERGED from [androidx.viewpager2:viewpager2:1.0.0] C:\Users\orifx\.gradle\caches\transforms-3\00ea7e51c12fccdef9077ec0f77a3539\transformed\jetified-viewpager2-1.0.0\AndroidManifest.xml:20:5-22:41
 MERGED from [androidx.viewpager2:viewpager2:1.0.0] C:\Users\orifx\.gradle\caches\transforms-3\00ea7e51c12fccdef9077ec0f77a3539\transformed\jetified-viewpager2-1.0.0\AndroidManifest.xml:20:5-22:41
 MERGED from [androidx.fragment:fragment:1.3.6] C:\Users\orifx\.gradle\caches\transforms-3\c3dc071c2c0ff1053390120e17d4afaf\transformed\fragment-1.3.6\AndroidManifest.xml:20:5-22:41
@@ -179,6 +182,8 @@ MERGED from [androidx.savedstate:savedstate:1.2.0] C:\Users\orifx\.gradle\caches
 MERGED from [androidx.savedstate:savedstate:1.2.0] C:\Users\orifx\.gradle\caches\transforms-3\3b0e0d34e3a4e54dfd346d951a266594\transformed\jetified-savedstate-1.2.0\AndroidManifest.xml:20:5-22:41
 MERGED from [androidx.cardview:cardview:1.0.0] C:\Users\orifx\.gradle\caches\transforms-3\c8bdece1432d6bd447ee6e396aae1f67\transformed\cardview-1.0.0\AndroidManifest.xml:20:5-44
 MERGED from [androidx.cardview:cardview:1.0.0] C:\Users\orifx\.gradle\caches\transforms-3\c8bdece1432d6bd447ee6e396aae1f67\transformed\cardview-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.interpolator:interpolator:1.0.0] C:\Users\orifx\.gradle\caches\transforms-3\a3361067d52275e58bda1185bd0e0722\transformed\interpolator-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.interpolator:interpolator:1.0.0] C:\Users\orifx\.gradle\caches\transforms-3\a3361067d52275e58bda1185bd0e0722\transformed\interpolator-1.0.0\AndroidManifest.xml:20:5-44
 MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\orifx\.gradle\caches\transforms-3\0d338db99dbee4b2179b8774b799ae6a\transformed\jetified-startup-runtime-1.1.1\AndroidManifest.xml:21:5-23:41
 MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\orifx\.gradle\caches\transforms-3\0d338db99dbee4b2179b8774b799ae6a\transformed\jetified-startup-runtime-1.1.1\AndroidManifest.xml:21:5-23:41
 MERGED from [androidx.tracing:tracing:1.0.0] C:\Users\orifx\.gradle\caches\transforms-3\85cd030943f9498f5b64cfe78341395f\transformed\jetified-tracing-1.0.0\AndroidManifest.xml:20:5-22:41
@@ -191,8 +196,6 @@ MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.5.1] C:\Users\orifx\.g
 MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.5.1] C:\Users\orifx\.gradle\caches\transforms-3\d2b78ee51ff8035d4eb23d64df7819c9\transformed\lifecycle-livedata-core-2.5.1\AndroidManifest.xml:20:5-22:41
 MERGED from [androidx.arch.core:core-runtime:2.1.0] C:\Users\orifx\.gradle\caches\transforms-3\1ba6e62301e30dc0f6717cc5fa502dec\transformed\core-runtime-2.1.0\AndroidManifest.xml:20:5-22:41
 MERGED from [androidx.arch.core:core-runtime:2.1.0] C:\Users\orifx\.gradle\caches\transforms-3\1ba6e62301e30dc0f6717cc5fa502dec\transformed\core-runtime-2.1.0\AndroidManifest.xml:20:5-22:41
-MERGED from [androidx.interpolator:interpolator:1.0.0] C:\Users\orifx\.gradle\caches\transforms-3\a3361067d52275e58bda1185bd0e0722\transformed\interpolator-1.0.0\AndroidManifest.xml:20:5-44
-MERGED from [androidx.interpolator:interpolator:1.0.0] C:\Users\orifx\.gradle\caches\transforms-3\a3361067d52275e58bda1185bd0e0722\transformed\interpolator-1.0.0\AndroidManifest.xml:20:5-44
 MERGED from [androidx.documentfile:documentfile:1.0.0] C:\Users\orifx\.gradle\caches\transforms-3\b7916a1392bbb1cace393bfa310f2e1c\transformed\documentfile-1.0.0\AndroidManifest.xml:20:5-44
 MERGED from [androidx.documentfile:documentfile:1.0.0] C:\Users\orifx\.gradle\caches\transforms-3\b7916a1392bbb1cace393bfa310f2e1c\transformed\documentfile-1.0.0\AndroidManifest.xml:20:5-44
 MERGED from [androidx.localbroadcastmanager:localbroadcastmanager:1.0.0] C:\Users\orifx\.gradle\caches\transforms-3\5271149ab19ed6165189410cef969bfe\transformed\localbroadcastmanager-1.0.0\AndroidManifest.xml:20:5-44

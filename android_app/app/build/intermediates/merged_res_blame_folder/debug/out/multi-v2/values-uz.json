@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.navbatchilik.app-mergeDebugResources-26:/values-uz/values-uz.xml",
+            "outputFile": "com.navbatchilik.app-mergeDebugResources-27:/values-uz/values-uz.xml",
             "map": [
                 {
                     "source": "C:\\Users\\orifx\\.gradle\\caches\\transforms-3\\38fdf4e56534b3c4c6a8297bf7eeddee\\transformed\\appcompat-1.6.1\\res\\values-uz\\values-uz.xml",
