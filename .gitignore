@@ -1,0 +1,17 @@
+credentials.json
+termux_agent.py
+manual_sms.py
+get_id.py
+send_sms.py
+__pycache__/
+*.bat
+
+# Android build files
+android_app/app/build/
+android_app/.gradle/
+android_app/gradle/.idea/
+*.apk
+
+# Images (agar kerak bo'lsa olib tashlang)
+login_image.png
+login_bg.png

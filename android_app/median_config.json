@@ -1,0 +1,33 @@
+{
+    "general": {
+        "initialUrl": "https://ttjmchs.streamlit.app/",
+        "appName": "Navbatchilik",
+        "userAgentAdd": "gonern",
+        "enableWindowOpen": true
+    },
+    "navigation": {
+        "navigationTitleImage": false,
+        "showToolbar": false,
+        "androidShowNavigationMenu": false
+    },
+    "styling": {
+        "androidTheme": "light",
+        "ios": {
+            "tintColor": "#1E1E2E",
+            "backgroundColor": "#1E1E2E"
+        },
+        "android": {
+            "actionBarBackgroundColor": "#1E1E2E",
+            "statusBarColor": "#1E1E2E"
+        }
+    },
+    "permissions": {
+        "usesGeolocation": false,
+        "usesCamera": false
+    },
+    "services": {
+        "analytics": {
+            "enabled": false
+        }
+    }
+}

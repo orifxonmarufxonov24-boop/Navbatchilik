@@ -1,0 +1,91 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="com.navbatchilik.app"
+4    android:versionCode="1"
+5    android:versionName="1.0" >
+6
+7    <uses-sdk
+8        android:minSdkVersion="24"
+9        android:targetSdkVersion="34" />
+10
+11    <uses-permission android:name="android.permission.INTERNET" />
+11-->C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:5:5-67
+11-->C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:5:22-64
+12    <uses-permission android:name="android.permission.SEND_SMS" />
+12-->C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:6:5-67
+12-->C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:6:22-64
+13    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+13-->C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:7:5-79
+13-->C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:7:22-76
+14
+15    <permission
+15-->[androidx.core:core:1.9.0] C:\Users\orifx\.gradle\caches\transforms-3\cf89ab1ea7cc19352d4f47103c74320d\transformed\core-1.9.0\AndroidManifest.xml:22:5-24:47
+16        android:name="com.navbatchilik.app.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+16-->[androidx.core:core:1.9.0] C:\Users\orifx\.gradle\caches\transforms-3\cf89ab1ea7cc19352d4f47103c74320d\transformed\core-1.9.0\AndroidManifest.xml:23:9-81
+17        android:protectionLevel="signature" />
+17-->[androidx.core:core:1.9.0] C:\Users\orifx\.gradle\caches\transforms-3\cf89ab1ea7cc19352d4f47103c74320d\transformed\core-1.9.0\AndroidManifest.xml:24:9-44
+18
+19    <uses-permission android:name="com.navbatchilik.app.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+19-->[androidx.core:core:1.9.0] C:\Users\orifx\.gradle\caches\transforms-3\cf89ab1ea7cc19352d4f47103c74320d\transformed\core-1.9.0\AndroidManifest.xml:26:5-97
+19-->[androidx.core:core:1.9.0] C:\Users\orifx\.gradle\caches\transforms-3\cf89ab1ea7cc19352d4f47103c74320d\transformed\core-1.9.0\AndroidManifest.xml:26:22-94
+20
+21    <application
+21-->C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:9:5-27:19
+22        android:allowBackup="true"
+22-->C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:10:9-35
+23        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+23-->[androidx.core:core:1.9.0] C:\Users\orifx\.gradle\caches\transforms-3\cf89ab1ea7cc19352d4f47103c74320d\transformed\core-1.9.0\AndroidManifest.xml:28:18-86
+24        android:debuggable="true"
+25        android:extractNativeLibs="false"
+26        android:label="@string/app_name"
+26-->C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:11:9-41
+27        android:supportsRtl="true"
+27-->C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:12:9-35
+28        android:theme="@style/Theme.NavbatchilikApp"
+28-->C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:13:9-53
+29        android:usesCleartextTraffic="true" >
+29-->C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:14:9-44
+30        <activity
+30-->C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:17:9-25:20
+31            android:name="com.navbatchilik.app.MainActivity"
+31-->C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:18:13-41
+32            android:configChanges="orientation|screenSize|keyboardHidden"
+32-->C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:20:13-74
+33            android:exported="true" >
+33-->C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:19:13-36
+34            <intent-filter>
+34-->C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:21:13-24:29
+35                <action android:name="android.intent.action.MAIN" />
+35-->C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:22:17-69
+35-->C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:22:25-66
+36
+37                <category android:name="android.intent.category.LAUNCHER" />
+37-->C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:23:17-77
+37-->C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:23:27-74
+38            </intent-filter>
+39        </activity>
+40
+41        <provider
+41-->[androidx.emoji2:emoji2:1.2.0] C:\Users\orifx\.gradle\caches\transforms-3\acd7b7be712c1ada299bcfc81b726076\transformed\jetified-emoji2-1.2.0\AndroidManifest.xml:24:9-32:20
+42            android:name="androidx.startup.InitializationProvider"
+42-->[androidx.emoji2:emoji2:1.2.0] C:\Users\orifx\.gradle\caches\transforms-3\acd7b7be712c1ada299bcfc81b726076\transformed\jetified-emoji2-1.2.0\AndroidManifest.xml:25:13-67
+43            android:authorities="com.navbatchilik.app.androidx-startup"
+43-->[androidx.emoji2:emoji2:1.2.0] C:\Users\orifx\.gradle\caches\transforms-3\acd7b7be712c1ada299bcfc81b726076\transformed\jetified-emoji2-1.2.0\AndroidManifest.xml:26:13-68
+44            android:exported="false" >
+44-->[androidx.emoji2:emoji2:1.2.0] C:\Users\orifx\.gradle\caches\transforms-3\acd7b7be712c1ada299bcfc81b726076\transformed\jetified-emoji2-1.2.0\AndroidManifest.xml:27:13-37
+45            <meta-data
+45-->[androidx.emoji2:emoji2:1.2.0] C:\Users\orifx\.gradle\caches\transforms-3\acd7b7be712c1ada299bcfc81b726076\transformed\jetified-emoji2-1.2.0\AndroidManifest.xml:29:13-31:52
+46                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+46-->[androidx.emoji2:emoji2:1.2.0] C:\Users\orifx\.gradle\caches\transforms-3\acd7b7be712c1ada299bcfc81b726076\transformed\jetified-emoji2-1.2.0\AndroidManifest.xml:30:17-75
+47                android:value="androidx.startup" />
+47-->[androidx.emoji2:emoji2:1.2.0] C:\Users\orifx\.gradle\caches\transforms-3\acd7b7be712c1ada299bcfc81b726076\transformed\jetified-emoji2-1.2.0\AndroidManifest.xml:31:17-49
+48            <meta-data
+48-->[androidx.lifecycle:lifecycle-process:2.4.1] C:\Users\orifx\.gradle\caches\transforms-3\2f569bc5cc97ee66011fd77f4e8c57ec\transformed\jetified-lifecycle-process-2.4.1\AndroidManifest.xml:31:13-33:52
+49                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+49-->[androidx.lifecycle:lifecycle-process:2.4.1] C:\Users\orifx\.gradle\caches\transforms-3\2f569bc5cc97ee66011fd77f4e8c57ec\transformed\jetified-lifecycle-process-2.4.1\AndroidManifest.xml:32:17-78
+50                android:value="androidx.startup" />
+50-->[androidx.lifecycle:lifecycle-process:2.4.1] C:\Users\orifx\.gradle\caches\transforms-3\2f569bc5cc97ee66011fd77f4e8c57ec\transformed\jetified-lifecycle-process-2.4.1\AndroidManifest.xml:33:17-49
+51        </provider>
+52    </application>
+53
+54</manifest>
