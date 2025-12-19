@@ -2,20 +2,7 @@
  * ============================================================================
  * NAVBATCHILIK - Yotoqxona Navbatchilik Tizimi
  * ============================================================================
- * 
- * Copyright (c) 2024 Orifxon Marufxonov
- * Barcha huquqlar himoyalangan / All Rights Reserved
- * 
- * Bu dastur Orifxon Marufxonov tomonidan yaratilgan va uning intellektual 
- * mulki hisoblanadi. Ruxsatsiz nusxalash, tarqatish, o'zgartirish yoki 
- * tijorat maqsadlarida foydalanish qat'iyan man etiladi.
- * 
- * This software is created by Orifxon Marufxonov and is his intellectual 
- * property. Unauthorized copying, distribution, modification, or commercial 
- * use is strictly prohibited.
- * 
- * Bog'lanish / Contact: @Sheeyh_o5 (Telegram)
- * 
+ * Copyright (c) 2024 Orifxon Marufxonov - Barcha huquqlar himoyalangan
  * ============================================================================
  */
 
@@ -23,27 +10,33 @@ package com.navbatchilik.app;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.content.pm.Signature;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.AsyncTask;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+import java.io.BufferedReader;
 import java.io.File;
-import java.security.MessageDigest;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import org.json.JSONObject;
 
 public class MainActivity extends Activity {
 
     private WebView webView;
     private SwipeRefreshLayout swipeRefresh;
-    private static final String URL = "https://ttjmchs.streamlit.app/";
+    private static final String APP_URL = "https://ttjmchs.streamlit.app/";
+    private static final String VERSION_URL = "https://raw.githubusercontent.com/orifxonmarufxonov24-boop/Navbatchilik/main/version.json";
     
     // Mualliflik ma'lumotlari
     private static final String AUTHOR = "Orifxon Marufxonov";
-    private static final String COPYRIGHT = "© 2024 " + AUTHOR + ". Barcha huquqlar himoyalangan.";
-    private static final String VERSION = "1.0.0";
+    private static final String COPYRIGHT = "© 2024 " + AUTHOR;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,6 +50,9 @@ public class MainActivity extends Activity {
         
         setContentView(R.layout.activity_main);
         
+        // Yangilanish tekshiruvi
+        checkForUpdates();
+        
         // SwipeRefreshLayout va WebView ni topish
         swipeRefresh = findViewById(R.id.swipeRefresh);
         webView = findViewById(R.id.webview);
@@ -66,8 +62,6 @@ public class MainActivity extends Activity {
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
         settings.setCacheMode(WebSettings.LOAD_DEFAULT);
-        
-        // SSL xatolarini bloklash (xavfsizlik uchun)
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
         
         // Havolalarni ichida ochish
@@ -79,7 +73,6 @@ public class MainActivity extends Activity {
             
             @Override
             public void onReceivedSslError(WebView view, android.webkit.SslErrorHandler handler, android.net.http.SslError error) {
-                // SSL xatolarini qabul qilmaslik (xavfsizlik)
                 handler.cancel();
             }
         });
@@ -92,47 +85,99 @@ public class MainActivity extends Activity {
             getResources().getColor(android.R.color.holo_green_light)
         );
         
-        webView.loadUrl(URL);
+        webView.loadUrl(APP_URL);
     }
     
     /**
-     * Xavfsizlik tekshiruvi
-     * - Root tekshiruvi
-     * - Debugger tekshiruvi
-     * - Emulator tekshiruvi
+     * Yangilanish tekshiruvi
      */
+    private void checkForUpdates() {
+        new AsyncTask<Void, Void, JSONObject>() {
+            @Override
+            protected JSONObject doInBackground(Void... voids) {
+                try {
+                    URL url = new URL(VERSION_URL);
+                    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                    conn.setRequestMethod("GET");
+                    conn.setConnectTimeout(5000);
+                    conn.setReadTimeout(5000);
+                    
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                    StringBuilder response = new StringBuilder();
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        response.append(line);
+                    }
+                    reader.close();
+                    
+                    return new JSONObject(response.toString());
+                } catch (Exception e) {
+                    return null;
+                }
+            }
+            
+            @Override
+            protected void onPostExecute(JSONObject versionInfo) {
+                if (versionInfo != null) {
+                    try {
+                        int serverVersionCode = versionInfo.getInt("versionCode");
+                        String serverVersion = versionInfo.getString("version");
+                        String releaseNotes = versionInfo.getString("releaseNotes");
+                        String downloadUrl = versionInfo.getString("downloadUrl");
+                        boolean forceUpdate = versionInfo.optBoolean("forceUpdate", false);
+                        
+                        int currentVersionCode = getCurrentVersionCode();
+                        
+                        if (serverVersionCode > currentVersionCode) {
+                            showUpdateDialog(serverVersion, releaseNotes, downloadUrl, forceUpdate);
+                        }
+                    } catch (Exception e) {
+                        // Ignore
+                    }
+                }
+            }
+        }.execute();
+    }
+    
+    private int getCurrentVersionCode() {
+        try {
+            PackageInfo pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
+            return pInfo.versionCode;
+        } catch (PackageManager.NameNotFoundException e) {
+            return 1;
+        }
+    }
+    
+    private void showUpdateDialog(String version, String notes, String downloadUrl, boolean force) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("🎉 Yangi versiya mavjud!");
+        builder.setMessage("Versiya: " + version + "\n\n" + notes + "\n\nYangilashni xohlaysizmi?");
+        builder.setPositiveButton("✅ Yangilash", (dialog, which) -> {
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(downloadUrl));
+            startActivity(intent);
+        });
+        
+        if (!force) {
+            builder.setNegativeButton("❌ Keyinroq", (dialog, which) -> dialog.dismiss());
+        }
+        
+        builder.setCancelable(!force);
+        builder.show();
+    }
+    
     private boolean isSecure() {
-        // Root tekshiruvi
-        if (isRooted()) {
-            return false;
-        }
-        
-        // Debugger tekshiruvi
-        if (android.os.Debug.isDebuggerConnected()) {
-            return false;
-        }
-        
+        if (isRooted()) return false;
+        if (android.os.Debug.isDebuggerConnected()) return false;
         return true;
     }
     
     private boolean isRooted() {
         String[] paths = {
-            "/system/app/Superuser.apk",
-            "/sbin/su",
-            "/system/bin/su",
-            "/system/xbin/su",
-            "/data/local/xbin/su",
-            "/data/local/bin/su",
-            "/system/sd/xbin/su",
-            "/system/bin/failsafe/su",
-            "/data/local/su",
-            "/su/bin/su"
+            "/system/app/Superuser.apk", "/sbin/su", "/system/bin/su",
+            "/system/xbin/su", "/data/local/xbin/su", "/data/local/bin/su"
         };
-        
         for (String path : paths) {
-            if (new File(path).exists()) {
-                return true;
-            }
+            if (new File(path).exists()) return true;
         }
         return false;
     }
@@ -153,20 +198,5 @@ public class MainActivity extends Activity {
         } else {
             super.onBackPressed();
         }
-    }
-    
-    /**
-     * Mualliflik ma'lumotlarini olish
-     */
-    public static String getAuthor() {
-        return AUTHOR;
-    }
-    
-    public static String getCopyright() {
-        return COPYRIGHT;
-    }
-    
-    public static String getVersion() {
-        return VERSION;
     }
 }
