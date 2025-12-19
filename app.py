@@ -97,43 +97,69 @@ def reset_login_attempts():
 
 def send_security_alert(attempts):
     """Xavfsizlik ogohlantirishi yuborish"""
+    tashkent_time = (datetime.utcnow() + timedelta(hours=5)).strftime('%Y-%m-%d %H:%M:%S')
     msg = f"""🚨 XAVFSIZLIK OGOHLANTIRISHI!
 
 ⚠️ Shubhali faoliyat aniqlandi!
 📊 Noto'g'ri parol urinishlari: {attempts}
-🕐 Vaqt: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+🕐 Vaqt: {tashkent_time} (Toshkent)
 
 Agar bu siz bo'lmasangiz, parolni o'zgartiring!"""
     send_telegram_alert(msg)
 
 def send_block_alert():
     """Bloklash haqida xabar yuborish"""
+    tashkent_time = (datetime.utcnow() + timedelta(hours=5)).strftime('%Y-%m-%d %H:%M:%S')
     msg = f"""🔒 FOYDALANUVCHI BLOKLANDI!
 
 ❌ {MAX_LOGIN_ATTEMPTS} marta noto'g'ri parol kiritildi
 ⏱️ Bloklash muddati: {BLOCK_TIME_MINUTES} daqiqa
-🕐 Vaqt: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+🕐 Vaqt: {tashkent_time} (Toshkent)
 
 Ehtimol brute-force hujumi!"""
     send_telegram_alert(msg)
 
+def get_tashkent_time():
+    """Toshkent vaqtini olish (UTC+5)"""
+    return (datetime.utcnow() + timedelta(hours=5)).strftime('%Y-%m-%d %H:%M:%S')
+
+def get_device_type():
+    """Qurilma turini aniqlash"""
+    try:
+        from streamlit.web.server.websocket_headers import _get_websocket_headers
+        headers = _get_websocket_headers()
+        user_agent = headers.get("User-Agent", "").lower() if headers else ""
+        
+        if "android" in user_agent or "mobile" in user_agent:
+            return "📱 Mobil ilova"
+        elif "iphone" in user_agent or "ipad" in user_agent:
+            return "🍎 iOS qurilma"
+        else:
+            return "💻 Kompyuter/Brauzer"
+    except:
+        return "🌐 Noma'lum qurilma"
+
 def send_successful_login_alert():
     """Muvaffaqiyatli kirish haqida xabar"""
+    device = get_device_type()
+    tashkent_time = get_tashkent_time()
+    
     msg = f"""✅ TIZIMGA KIRISH
 
-🕐 Vaqt: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-📱 Kimdir tizimga kirdi!
+🕐 Vaqt: {tashkent_time} (Toshkent)
+{device}
 
 Agar bu siz bo'lmasangiz - darhol parolni o'zgartiring!"""
     send_telegram_alert(msg)
 
 def log_activity(action, details=""):
     """Muhim faoliyatni qayd qilish va xabar yuborish"""
+    tashkent_time = get_tashkent_time()
     msg = f"""📋 FAOLIYAT LOGI
 
 📌 Harakat: {action}
 📝 Tafsilotlar: {details}
-🕐 Vaqt: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"""
+🕐 Vaqt: {tashkent_time} (Toshkent)"""
     send_telegram_alert(msg)
 
 # --- KONFIGURATSIYA ---
