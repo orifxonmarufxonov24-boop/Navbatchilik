@@ -16,10 +16,11 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.AsyncTask;
+import android.view.View;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+import android.widget.ImageButton;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
@@ -30,11 +31,10 @@ import org.json.JSONObject;
 public class MainActivity extends Activity {
 
     private WebView webView;
-    private SwipeRefreshLayout swipeRefresh;
+    private ImageButton refreshButton;
     private static final String APP_URL = "https://ttjmchs.streamlit.app/";
     private static final String VERSION_URL = "https://raw.githubusercontent.com/orifxonmarufxonov24-boop/Navbatchilik/main/version.json";
     
-    // Mualliflik ma'lumotlari
     private static final String AUTHOR = "Orifxon Marufxonov";
     private static final String COPYRIGHT = "© 2024 " + AUTHOR;
 
@@ -53,9 +53,17 @@ public class MainActivity extends Activity {
         // Yangilanish tekshiruvi
         checkForUpdates();
         
-        // SwipeRefreshLayout va WebView ni topish
-        swipeRefresh = findViewById(R.id.swipeRefresh);
+        // UI elementlarini topish
         webView = findViewById(R.id.webview);
+        refreshButton = findViewById(R.id.refreshButton);
+        
+        // Refresh tugmasi
+        refreshButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                webView.reload();
+            }
+        });
         
         // WebView sozlamalari
         WebSettings settings = webView.getSettings();
@@ -67,23 +75,10 @@ public class MainActivity extends Activity {
         // Havolalarni ichida ochish
         webView.setWebViewClient(new WebViewClient() {
             @Override
-            public void onPageFinished(WebView view, String url) {
-                swipeRefresh.setRefreshing(false);
-            }
-            
-            @Override
             public void onReceivedSslError(WebView view, android.webkit.SslErrorHandler handler, android.net.http.SslError error) {
                 handler.cancel();
             }
         });
-        
-        // Pull to Refresh
-        swipeRefresh.setOnRefreshListener(() -> webView.reload());
-        
-        swipeRefresh.setColorSchemeColors(
-            getResources().getColor(android.R.color.holo_blue_bright),
-            getResources().getColor(android.R.color.holo_green_light)
-        );
         
         webView.loadUrl(APP_URL);
     }
