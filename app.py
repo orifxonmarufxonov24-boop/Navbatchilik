@@ -9,7 +9,7 @@ import requests
 # --- TELEGRAM SOZLAMALARI ---
 TELEGRAM_TOKEN = "8259734572:AAGeJLKmmruLByDjx81gdi1VcjNt3ZnX894"
 ADMIN_CHAT_ID = "7693191223"
-TTJ_GROUP_ID = "2623014807"  # TTJ guruhi
+TTJ_GROUP_ID = "-1002623014807"  # Shaxsiy kanal
 
 def send_telegram_alert(message):
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
