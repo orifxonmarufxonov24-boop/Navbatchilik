@@ -859,4 +859,102 @@ with tab4:
                 st.info("📌 Face recognition moduli hali o'rnatilmagan")
         except:
             st.info("📌 Ro'yxatdagi talabalarni ko'rish uchun lokal server kerak")
-
+        
+        # --- MA'LUMOTNI TAHRIRLASH ---
+        st.markdown("---")
+        st.markdown("### ✏️ Talaba Ma'lumotlarini Tahrirlash")
+        st.info("📌 Ism, familiya yoki xona raqamini o'zgartirish uchun talabani tanlang.")
+        
+        # Qidiruv
+        search_query = st.text_input(
+            "🔍 Qidirish",
+            placeholder="Ism, familiya yoki xona raqamini kiriting...",
+            key="search_student"
+        )
+        
+        # Filtrlash
+        if search_query:
+            filtered_students = df[
+                df['ism familiya'].str.contains(search_query, case=False, na=False) |
+                df['xona'].astype(str).str.contains(search_query, case=False, na=False)
+            ]
+        else:
+            filtered_students = df
+        
+        if len(filtered_students) > 0:
+            # Talabani tanlash
+            edit_options = filtered_students.apply(
+                lambda x: f"{x['ism familiya']} ({x['xona']})", axis=1
+            ).tolist()
+            
+            selected_for_edit = st.selectbox(
+                "Tahrirlash uchun talabani tanlang",
+                options=edit_options,
+                key="edit_student_select"
+            )
+            
+            if selected_for_edit:
+                # Tanlangan talabaning indeksini topish
+                selected_idx = edit_options.index(selected_for_edit)
+                original_row = filtered_students.iloc[selected_idx]
+                
+                # Tahrirlash formasi
+                with st.form("edit_student_form"):
+                    col1, col2 = st.columns(2)
+                    
+                    with col1:
+                        new_name = st.text_input(
+                            "Ism Familiya",
+                            value=original_row['ism familiya'],
+                            key="edit_name"
+                        )
+                    
+                    with col2:
+                        new_xona = st.text_input(
+                            "Xona raqami",
+                            value=str(original_row['xona']),
+                            key="edit_xona"
+                        )
+                    
+                    # Telefon raqami (agar mavjud bo'lsa)
+                    if 'telefon raqami' in original_row:
+                        new_phone = st.text_input(
+                            "Telefon raqami",
+                            value=str(original_row['telefon raqami']),
+                            key="edit_phone"
+                        )
+                    else:
+                        new_phone = None
+                    
+                    submit_edit = st.form_submit_button("💾 Saqlash", type="primary")
+                    
+                    if submit_edit:
+                        try:
+                            # Google Sheetdagi qatorni yangilash
+                            # Asl DataFrame dagi indeksni topish
+                            original_df_idx = df[
+                                (df['ism familiya'] == original_row['ism familiya']) &
+                                (df['xona'].astype(str) == str(original_row['xona']))
+                            ].index[0]
+                            
+                            sheet = get_main_sheet()
+                            row_number = original_df_idx + 2  # Header + 0-index
+                            
+                            # Ism Familiyani yangilash (1-ustun)
+                            sheet.update_cell(row_number, 1, new_name)
+                            
+                            # Xonani yangilash (2-ustun)
+                            sheet.update_cell(row_number, 2, new_xona)
+                            
+                            # Telefon raqamini yangilash (3-ustun)
+                            if new_phone:
+                                sheet.update_cell(row_number, 3, new_phone)
+                            
+                            st.success(f"✅ {new_name} ma'lumotlari saqlandi!")
+                            log_activity("Talaba ma'lumoti tahrirlandi", f"{original_row['ism familiya']} → {new_name}")
+                            st.rerun()
+                            
+                        except Exception as e:
+                            st.error(f"Xatolik: {e}")
+        else:
+            st.warning("Qidiruv natijasi topilmadi")
