@@ -724,21 +724,17 @@ with tab3:
     
     # Qidirish formasi - form ichida sahifa yangilanmaydi
     with st.form("search_form"):
-        search_col1, search_col2 = st.columns([4, 1])
+        selected_search = st.selectbox(
+            "Talabani tanlang yoki qidiring",
+            options=search_student_options,
+            index=None,
+            placeholder="Ism yoki xona raqamini yozing...",
+            key="search_student_stats"
+        )
         
-        with search_col1:
-            selected_search = st.selectbox(
-                "Talabani tanlang",
-                options=search_student_options,
-                placeholder="Ism yoki xona raqamini yozing...",
-                key="search_student_stats",
-                label_visibility="collapsed"
-            )
+        search_submitted = st.form_submit_button("🔍 Qidirish", type="primary", use_container_width=True)
         
-        with search_col2:
-            search_submitted = st.form_submit_button("🔍 Qidirish", type="primary", use_container_width=True)
-        
-        if search_submitted:
+        if search_submitted and selected_search:
             st.session_state.show_student_details = True
             st.session_state.selected_student_name = selected_search
     
