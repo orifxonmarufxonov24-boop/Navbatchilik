@@ -1,0 +1,258 @@
+"""
+Face Recognition Module - Yo'qlama Tizimi
+==========================================
+110 talaba yuzlarini aniqlash uchun modul
+
+Copyright (c) 2024 Orifxon Marufxonov
+"""
+
+import os
+import pickle
+import numpy as np
+from PIL import Image
+import io
+import base64
+
+# face_recognition o'rnatilganligini tekshirish
+try:
+    import face_recognition
+    FACE_RECOGNITION_AVAILABLE = True
+except ImportError:
+    FACE_RECOGNITION_AVAILABLE = False
+    print("⚠️ face_recognition kutubxonasi o'rnatilmagan!")
+
+# Sozlamalar
+FACES_DIR = os.path.join(os.path.dirname(__file__), "faces")
+ENCODINGS_FILE = os.path.join(os.path.dirname(__file__), "face_encodings.pkl")
+TOLERANCE = 0.6  # Yuz aniqlash sezgirligi (0.4-0.6 oralig'i yaxshi)
+
+
+def ensure_faces_dir():
+    """faces papkasini yaratish"""
+    if not os.path.exists(FACES_DIR):
+        os.makedirs(FACES_DIR)
+        print(f"📁 '{FACES_DIR}' papkasi yaratildi")
+    return FACES_DIR
+
+
+def load_image_from_base64(base64_string):
+    """Base64 stringdan rasm yuklash"""
+    image_data = base64.b64decode(base64_string)
+    image = Image.open(io.BytesIO(image_data))
+    return np.array(image)
+
+
+def load_image_from_file(file_path):
+    """Fayldan rasm yuklash"""
+    return face_recognition.load_image_file(file_path)
+
+
+def encode_face(image_array):
+    """
+    Rasmdan yuz encodingini olish
+    
+    Returns:
+        encoding yoki None (agar yuz topilmasa)
+    """
+    if not FACE_RECOGNITION_AVAILABLE:
+        return None
+    
+    face_locations = face_recognition.face_locations(image_array)
+    if len(face_locations) == 0:
+        return None
+    
+    # Birinchi topilgan yuzni olish
+    encodings = face_recognition.face_encodings(image_array, face_locations)
+    if len(encodings) > 0:
+        return encodings[0]
+    return None
+
+
+def register_student(student_id, student_name, image_source):
+    """
+    Talabani ro'yxatdan o'tkazish
+    
+    Args:
+        student_id: Talaba ID raqami
+        student_name: Talaba ismi
+        image_source: Rasm (fayl yo'li, base64, yoki numpy array)
+    
+    Returns:
+        dict: {"success": bool, "message": str}
+    """
+    ensure_faces_dir()
+    
+    # Rasmni yuklash
+    if isinstance(image_source, str):
+        if os.path.exists(image_source):
+            image = load_image_from_file(image_source)
+        elif image_source.startswith("data:image"):
+            # data:image/jpeg;base64,xxxxx formatidan base64 qismini olish
+            base64_data = image_source.split(",")[1]
+            image = load_image_from_base64(base64_data)
+        else:
+            image = load_image_from_base64(image_source)
+    elif isinstance(image_source, np.ndarray):
+        image = image_source
+    else:
+        return {"success": False, "message": "Noto'g'ri rasm formati"}
+    
+    # Yuz encodingini olish
+    encoding = encode_face(image)
+    if encoding is None:
+        return {"success": False, "message": "Rasmda yuz topilmadi!"}
+    
+    # Encodingni saqlash
+    encodings = load_all_encodings()
+    encodings[student_id] = {
+        "name": student_name,
+        "encoding": encoding
+    }
+    save_all_encodings(encodings)
+    
+    # Rasmni ham saqlash (backup uchun)
+    image_path = os.path.join(FACES_DIR, f"{student_id}.jpg")
+    Image.fromarray(image).save(image_path)
+    
+    return {"success": True, "message": f"✅ {student_name} muvaffaqiyatli ro'yxatdan o'tdi!"}
+
+
+def load_all_encodings():
+    """Barcha talabalar encodinglarini yuklash"""
+    if os.path.exists(ENCODINGS_FILE):
+        with open(ENCODINGS_FILE, "rb") as f:
+            return pickle.load(f)
+    return {}
+
+
+def save_all_encodings(encodings):
+    """Barcha encodinglarni saqlash"""
+    with open(ENCODINGS_FILE, "wb") as f:
+        pickle.dump(encodings, f)
+
+
+def recognize_faces_in_frame(frame_image):
+    """
+    Kadrdan yuzlarni aniqlash
+    
+    Args:
+        frame_image: Kamera kadri (numpy array yoki base64)
+    
+    Returns:
+        list: Aniqlangan talabalar ro'yxati
+        [{"student_id": "001", "name": "Ali Valiyev", "location": (top, right, bottom, left)}]
+    """
+    if not FACE_RECOGNITION_AVAILABLE:
+        return []
+    
+    # Rasmni yuklash
+    if isinstance(frame_image, str):
+        if frame_image.startswith("data:image"):
+            base64_data = frame_image.split(",")[1]
+            image = load_image_from_base64(base64_data)
+        else:
+            image = load_image_from_base64(frame_image)
+    else:
+        image = frame_image
+    
+    # Barcha talabalar encodinglarini yuklash
+    all_encodings = load_all_encodings()
+    if not all_encodings:
+        return []
+    
+    # Kadrdagi yuzlarni topish
+    face_locations = face_recognition.face_locations(image)
+    face_encodings = face_recognition.face_encodings(image, face_locations)
+    
+    recognized = []
+    known_encodings = [data["encoding"] for data in all_encodings.values()]
+    known_ids = list(all_encodings.keys())
+    
+    for face_encoding, face_location in zip(face_encodings, face_locations):
+        # Har bir yuzni ma'lum yuzlar bilan solishtirish
+        matches = face_recognition.compare_faces(known_encodings, face_encoding, TOLERANCE)
+        
+        if True in matches:
+            match_index = matches.index(True)
+            student_id = known_ids[match_index]
+            student_data = all_encodings[student_id]
+            
+            recognized.append({
+                "student_id": student_id,
+                "name": student_data["name"],
+                "location": face_location
+            })
+    
+    return recognized
+
+
+def take_attendance(frame_image):
+    """
+    Yo'qlama olish - rasmdan borlarni aniqlash
+    
+    Args:
+        frame_image: Guruh rasmi
+    
+    Returns:
+        dict: {
+            "present": [{"id": "001", "name": "Ali Valiyev"}, ...],
+            "absent": [{"id": "002", "name": "Vali Aliyev"}, ...],
+            "total": 110,
+            "present_count": 95,
+            "absent_count": 15
+        }
+    """
+    # Aniqlangan yuzlar
+    recognized = recognize_faces_in_frame(frame_image)
+    present_ids = set(r["student_id"] for r in recognized)
+    
+    # Barcha talabalar
+    all_encodings = load_all_encodings()
+    all_ids = set(all_encodings.keys())
+    
+    # Kelmayganlar
+    absent_ids = all_ids - present_ids
+    
+    present = [{"id": sid, "name": all_encodings[sid]["name"]} for sid in present_ids]
+    absent = [{"id": sid, "name": all_encodings[sid]["name"]} for sid in absent_ids]
+    
+    return {
+        "present": present,
+        "absent": absent,
+        "total": len(all_ids),
+        "present_count": len(present),
+        "absent_count": len(absent)
+    }
+
+
+def get_registered_students():
+    """Ro'yxatdan o'tgan talabalar ro'yxati"""
+    all_encodings = load_all_encodings()
+    return [
+        {"id": sid, "name": data["name"]}
+        for sid, data in all_encodings.items()
+    ]
+
+
+def delete_student(student_id):
+    """Talabani o'chirish"""
+    encodings = load_all_encodings()
+    if student_id in encodings:
+        del encodings[student_id]
+        save_all_encodings(encodings)
+        
+        # Rasmni ham o'chirish
+        image_path = os.path.join(FACES_DIR, f"{student_id}.jpg")
+        if os.path.exists(image_path):
+            os.remove(image_path)
+        
+        return {"success": True, "message": "Talaba o'chirildi"}
+    return {"success": False, "message": "Talaba topilmadi"}
+
+
+# Test uchun
+if __name__ == "__main__":
+    ensure_faces_dir()
+    print(f"✅ Face Recognition Module yuklandi")
+    print(f"📁 Yuzlar papkasi: {FACES_DIR}")
+    print(f"📊 Ro'yxatdan o'tgan talabalar: {len(get_registered_students())}")

@@ -3,3 +3,8 @@ pandas
 gspread
 oauth2client
 requests
+flask
+flask-cors
+opencv-python-headless
+Pillow
+numpy

@@ -358,7 +358,7 @@ except Exception as e:
     st.stop()
 
 # --- TABLAR ---
-tab1, tab2, tab3 = st.tabs(["📝 Navbatchilik", "�️ Naryad", "�📊 Statistika"])
+tab1, tab2, tab3, tab4 = st.tabs(["📝 Navbatchilik", "🛠️ Naryad", "📊 Statistika", "📸 Yo'qlama"])
 
 with tab1:
     # --- UI ---
@@ -655,3 +655,202 @@ with tab3:
         # Grafik
         st.bar_chart(stats.set_index("ism familiya")["Jami Navbatchilik"])
 
+# ============================================================================
+# YO'QLAMA TIZIMI - FACE RECOGNITION
+# ============================================================================
+with tab4:
+    st.subheader("📸 Face ID Yo'qlama Tizimi")
+    
+    # Sub-tablar
+    yoqlama_tab1, yoqlama_tab2, yoqlama_tab3 = st.tabs([
+        "👤 Talaba Ro'yxatdan O'tkazish", 
+        "📸 Yo'qlama Olish",
+        "📋 Yo'qlama Tarixi"
+    ])
+    
+    # --- TALABA RO'YXATDAN O'TKAZISH ---
+    with yoqlama_tab1:
+        st.markdown("### 👤 Yangi Talaba Yuzini Ro'yxatdan O'tkazish")
+        st.info("📌 Har bir talabani bir marta ro'yxatdan o'tkazish kerak. Keyin yo'qlama avtomatik olinadi.")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            # Mavjud talabalar ro'yxatidan tanlash
+            student_options_for_face = sorted(df.apply(lambda x: f"{x['ism familiya']} ({x['xona']})", axis=1).tolist())
+            selected_student = st.selectbox(
+                "Talabani tanlang",
+                options=student_options_for_face,
+                placeholder="Ism yoki xona raqamini yozing..."
+            )
+        
+        with col2:
+            # Rasm yuklash
+            uploaded_face = st.file_uploader(
+                "Talaba yuz rasmini yuklang",
+                type=["jpg", "jpeg", "png"],
+                help="Aniq ko'rinadigan yuz rasmi yuklang"
+            )
+        
+        if uploaded_face is not None:
+            st.image(uploaded_face, caption="Yuklangan rasm", width=200)
+        
+        if st.button("✅ Ro'yxatdan O'tkazish", type="primary", disabled=uploaded_face is None):
+            if selected_student and uploaded_face:
+                try:
+                    import base64
+                    import sys
+                    import os
+                    
+                    # yangi papkasini path ga qo'shish
+                    yangi_path = os.path.join(os.path.dirname(__file__), "yangi")
+                    if yangi_path not in sys.path:
+                        sys.path.insert(0, yangi_path)
+                    
+                    try:
+                        import face_module as fm
+                        
+                        # Talaba ID sini olish
+                        student_idx = student_options_for_face.index(selected_student)
+                        student_id = str(student_idx).zfill(3)
+                        student_name = selected_student.split(" (")[0]
+                        
+                        # Rasmni base64 ga o'tkazish
+                        image_bytes = uploaded_face.read()
+                        image_base64 = base64.b64encode(image_bytes).decode()
+                        
+                        # Ro'yxatdan o'tkazish
+                        result = fm.register_student(student_id, student_name, image_base64)
+                        
+                        if result["success"]:
+                            st.success(result["message"])
+                            log_activity("Yo'qlama ro'yxatidan o'tkazish", f"{student_name} ro'yxatdan o'tdi")
+                        else:
+                            st.error(result["message"])
+                            
+                    except ImportError:
+                        st.warning("⚠️ Face recognition moduli yuklanmadi. Lokal serverda ishlaydi.")
+                        st.code("pip install face_recognition", language="bash")
+                        
+                except Exception as e:
+                    st.error(f"Xatolik: {e}")
+        
+        # Ro'yxatdan o'tgan talabalar
+        st.markdown("---")
+        st.markdown("### 📋 Ro'yxatdan O'tgan Talabalar")
+        
+        try:
+            import sys
+            import os
+            yangi_path = os.path.join(os.path.dirname(__file__), "yangi")
+            if yangi_path not in sys.path:
+                sys.path.insert(0, yangi_path)
+            
+            try:
+                import face_module as fm
+                registered = fm.get_registered_students()
+                
+                if registered:
+                    st.success(f"✅ Jami: {len(registered)} talaba ro'yxatdan o'tgan")
+                    for s in registered:
+                        col1, col2 = st.columns([4, 1])
+                        col1.write(f"👤 {s['name']}")
+                        if col2.button("🗑️", key=f"del_{s['id']}"):
+                            fm.delete_student(s['id'])
+                            st.rerun()
+                else:
+                    st.info("Hali hech kim ro'yxatdan o'tmagan")
+            except ImportError:
+                st.info("📌 Face recognition moduli hali o'rnatilmagan")
+        except:
+            st.info("📌 Ro'yxatdagi talabalarni ko'rish uchun lokal server kerak")
+    
+    # --- YO'QLAMA OLISH ---
+    with yoqlama_tab2:
+        st.markdown("### 📸 Yo'qlama Olish")
+        st.info("📌 Guruh rasmini yuklang yoki kameradan oling. Tizim avtomatik yuzlarni aniqlaydi.")
+        
+        # Rasm yuklash yoki kamera
+        input_method = st.radio(
+            "Rasm olish usuli",
+            ["📁 Fayl yuklash", "📷 Kameradan olish"],
+            horizontal=True
+        )
+        
+        frame_image = None
+        
+        if input_method == "📁 Fayl yuklash":
+            uploaded_frame = st.file_uploader(
+                "Guruh rasmini yuklang",
+                type=["jpg", "jpeg", "png"],
+                key="attendance_image"
+            )
+            if uploaded_frame:
+                st.image(uploaded_frame, caption="Yuklangan guruh rasmi", use_container_width=True)
+                frame_image = uploaded_frame.read()
+        else:
+            camera_image = st.camera_input("📷 Rasmga oling")
+            if camera_image:
+                frame_image = camera_image.read()
+        
+        if st.button("🔍 Yo'qlama Olish", type="primary", disabled=frame_image is None):
+            if frame_image:
+                with st.spinner("Yuzlar aniqlanmoqda..."):
+                    try:
+                        import base64
+                        import sys
+                        import os
+                        
+                        yangi_path = os.path.join(os.path.dirname(__file__), "yangi")
+                        if yangi_path not in sys.path:
+                            sys.path.insert(0, yangi_path)
+                        
+                        try:
+                            import face_module as fm
+                            
+                            # Rasmni base64 ga o'tkazish
+                            image_base64 = base64.b64encode(frame_image).decode()
+                            
+                            # Yo'qlamani olish
+                            result = fm.take_attendance(image_base64)
+                            
+                            # Natijalarni ko'rsatish
+                            col1, col2, col3 = st.columns(3)
+                            col1.metric("👥 Jami", result["total"])
+                            col2.metric("✅ Borlar", result["present_count"], delta=None)
+                            col3.metric("❌ Yo'qlar", result["absent_count"], delta=None, delta_color="inverse")
+                            
+                            st.markdown("---")
+                            
+                            # Borlar
+                            st.markdown("### ✅ Kelganlar")
+                            if result["present"]:
+                                for p in result["present"]:
+                                    st.write(f"✅ {p['name']}")
+                            else:
+                                st.warning("Hech kim aniqlanmadi")
+                            
+                            # Yo'qlar
+                            st.markdown("### ❌ Kelmayganlar")
+                            if result["absent"]:
+                                for a in result["absent"]:
+                                    st.write(f"❌ {a['name']}")
+                            else:
+                                st.success("Hamma kelgan!")
+                            
+                            # Log
+                            log_activity("Yo'qlama olindi", f"Borlar: {result['present_count']}, Yo'qlar: {result['absent_count']}")
+                            
+                        except ImportError:
+                            st.error("⚠️ Face recognition moduli yuklanmadi!")
+                            st.code("pip install face_recognition", language="bash")
+                            
+                    except Exception as e:
+                        st.error(f"Xatolik: {e}")
+    
+    # --- YO'QLAMA TARIXI ---
+    with yoqlama_tab3:
+        st.markdown("### 📋 Yo'qlama Tarixi")
+        st.info("🚧 Bu bo'lim tez orada qo'shiladi...")
+        
+        # TODO: Google Sheetsda yo'qlama tarixini saqlash va ko'rsatish
