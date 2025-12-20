@@ -1,9 +1,20 @@
 -- Merging decision tree log ---
+provider#androidx.core.content.FileProvider
+INJECTED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:35:9-43:20
+	android:grantUriPermissions
+		ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:39:13-47
+	android:authorities
+		INJECTED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml
+		ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:37:13-64
+	android:exported
+		ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:38:13-37
+	android:name
+		ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:36:13-62
 manifest
-ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:2:1-29:12
-INJECTED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:2:1-29:12
-INJECTED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:2:1-29:12
-INJECTED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:2:1-29:12
+ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:2:1-47:12
+INJECTED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:2:1-47:12
+INJECTED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:2:1-47:12
+INJECTED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:2:1-47:12
 MERGED from [com.google.android.material:material:1.9.0] C:\Users\orifx\.gradle\caches\8.13\transforms\74b74808373ab0205595ee932546f0dd\transformed\material-1.9.0\AndroidManifest.xml:17:1-26:12
 MERGED from [androidx.appcompat:appcompat-resources:1.6.1] C:\Users\orifx\.gradle\caches\8.13\transforms\7011d89884e6a3063a6ce55edd9f882f\transformed\jetified-appcompat-resources-1.6.1\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.constraintlayout:constraintlayout:2.0.1] C:\Users\orifx\.gradle\caches\8.13\transforms\f179046f4f525c9b4418b30f5c504ee7\transformed\constraintlayout-2.0.1\AndroidManifest.xml:2:1-11:12
@@ -67,9 +78,33 @@ uses-permission#android.permission.ACCESS_NETWORK_STATE
 ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:7:5-79
 	android:name
 		ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:7:22-76
+uses-permission#android.permission.CAMERA
+ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:9:5-65
+	android:name
+		ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:9:22-62
+uses-permission#android.permission.READ_EXTERNAL_STORAGE
+ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:10:5-80
+	android:name
+		ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:10:22-77
+uses-permission#android.permission.WRITE_EXTERNAL_STORAGE
+ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:11:5-81
+	android:name
+		ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:11:22-78
+uses-feature#android.hardware.camera
+ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:12:5-85
+	android:required
+		ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:12:58-82
+	android:name
+		ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:12:19-57
+uses-feature#android.hardware.camera.autofocus
+ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:13:5-95
+	android:required
+		ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:13:68-92
+	android:name
+		ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:13:19-67
 application
-ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:9:5-27:19
-INJECTED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:9:5-27:19
+ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:15:5-45:19
+INJECTED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:15:5-45:19
 MERGED from [com.google.android.material:material:1.9.0] C:\Users\orifx\.gradle\caches\8.13\transforms\74b74808373ab0205595ee932546f0dd\transformed\material-1.9.0\AndroidManifest.xml:24:5-20
 MERGED from [com.google.android.material:material:1.9.0] C:\Users\orifx\.gradle\caches\8.13\transforms\74b74808373ab0205595ee932546f0dd\transformed\material-1.9.0\AndroidManifest.xml:24:5-20
 MERGED from [androidx.constraintlayout:constraintlayout:2.0.1] C:\Users\orifx\.gradle\caches\8.13\transforms\f179046f4f525c9b4418b30f5c504ee7\transformed\constraintlayout-2.0.1\AndroidManifest.xml:9:5-20
@@ -89,35 +124,43 @@ MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\or
 	android:appComponentFactory
 		ADDED from [androidx.core:core:1.9.0] C:\Users\orifx\.gradle\caches\8.13\transforms\00eeb73d329f60914ee7cf1a9183d8d3\transformed\core-1.9.0\AndroidManifest.xml:28:18-86
 	android:supportsRtl
-		ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:12:9-35
+		ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:19:9-35
 	android:label
-		ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:11:9-41
+		ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:18:9-41
 	tools:targetApi
-		ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:15:9-29
+		ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:22:9-29
+	android:icon
+		ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:17:9-43
 	android:allowBackup
-		ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:10:9-35
+		ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:16:9-35
 	android:theme
-		ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:13:9-53
+		ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:20:9-53
 	android:usesCleartextTraffic
-		ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:14:9-44
+		ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:21:9-44
 activity#com.navbatchilik.app.MainActivity
-ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:17:9-25:20
+ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:24:9-32:20
 	android:exported
-		ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:19:13-36
+		ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:26:13-36
 	android:configChanges
-		ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:20:13-74
+		ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:27:13-74
 	android:name
-		ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:18:13-41
+		ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:25:13-41
 intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
-ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:21:13-24:29
+ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:28:13-31:29
 action#android.intent.action.MAIN
-ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:22:17-69
+ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:29:17-69
 	android:name
-		ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:22:25-66
+		ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:29:25-66
 category#android.intent.category.LAUNCHER
-ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:23:17-77
+ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:30:17-77
 	android:name
-		ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:23:27-74
+		ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:30:27-74
+meta-data#android.support.FILE_PROVIDER_PATHS
+ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:40:13-42:54
+	android:resource
+		ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:42:17-51
+	android:name
+		ADDED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml:41:17-67
 uses-sdk
 INJECTED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\src\main\AndroidManifest.xml

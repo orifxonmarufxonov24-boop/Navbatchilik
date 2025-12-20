@@ -1,4 +1,0 @@
-com.navbatchilik.app.test.app-androidTest-0 C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\build\generated\res\resValues\androidTest\debug
-com.navbatchilik.app.test.app-mergeDebugAndroidTestResources-1 C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\build\intermediates\incremental\debugAndroidTest\mergeDebugAndroidTestResources\merged.dir
-com.navbatchilik.app.test.app-mergeDebugAndroidTestResources-2 C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\build\intermediates\incremental\debugAndroidTest\mergeDebugAndroidTestResources\stripped.dir
-com.navbatchilik.app.test.app-merged_res-3 C:\Users\orifx\OneDrive\Desktop\loyiha\android_app\app\build\intermediates\merged_res\debugAndroidTest

@@ -1,15 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     android:background="#1E1E2E">
 
     <!-- Yuqori panel -->
     <LinearLayout
-        android:id="@+id/topBar"
         android:layout_width="match_parent"
         android:layout_height="48dp"
-        android:layout_alignParentTop="true"
         android:background="#2D2D3A"
         android:gravity="center_vertical"
         android:orientation="horizontal"
@@ -25,14 +24,14 @@
             android:textSize="18sp"
             android:textStyle="bold" />
 
-        <ImageButton
+        <Button
             android:id="@+id/refreshButton"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Yangilash"
-            android:src="@android:drawable/ic_menu_rotate"
-            android:tint="#4FC3F7" />
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:text="🔄"
+            android:textSize="16sp"
+            android:background="#4FC3F7"
+            android:textColor="#FFFFFF" />
 
     </LinearLayout>
 
@@ -40,16 +39,13 @@
     <WebView
         android:id="@+id/webview"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_above="@id/footer"
-        android:layout_below="@id/topBar" />
+        android:layout_height="0dp"
+        android:layout_weight="1" />
 
     <!-- Footer -->
     <TextView
-        android:id="@+id/footer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
         android:background="#1E1E2E"
         android:gravity="center"
         android:padding="8dp"
@@ -57,4 +53,4 @@
         android:textColor="#666666"
         android:textSize="12sp" />
 
-</RelativeLayout>
+</LinearLayout>

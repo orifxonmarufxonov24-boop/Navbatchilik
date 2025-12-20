@@ -208,6 +208,32 @@ NARYAD_NAMES = {
 st.set_page_config(page_title="Navbatchilik Taqsimoti (Online)", layout="wide")
 st.title("📅 Yotoqxona Navbatchilik Taqsimoti (Google Sheets + Bot)")
 
+# Tugmalarni yashil qilish uchun CSS
+st.markdown("""
+<style>
+    /* Primary tugmalarni yashil qilish */
+    .stButton > button[kind="primary"],
+    button[data-testid="baseButton-primary"] {
+        background-color: #28a745 !important;
+        border-color: #28a745 !important;
+    }
+    .stButton > button[kind="primary"]:hover,
+    button[data-testid="baseButton-primary"]:hover {
+        background-color: #218838 !important;
+        border-color: #1e7e34 !important;
+    }
+    /* Form submit tugmalari */
+    .stFormSubmitButton > button {
+        background-color: #28a745 !important;
+        border-color: #28a745 !important;
+        color: white !important;
+    }
+    .stFormSubmitButton > button:hover {
+        background-color: #218838 !important;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 @st.cache_resource
 def get_client():
     scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
@@ -358,7 +384,7 @@ except Exception as e:
     st.stop()
 
 # --- TABLAR ---
-tab1, tab2, tab3, tab4 = st.tabs(["📝 Navbatchilik", "🛠️ Naryad", "📊 Statistika", "📸 Yo'qlama"])
+tab1, tab2, tab3, tab4 = st.tabs(["📝 Navbatchilik", "🛠️ Naryad", "📊 Statistika", "📨 Xabarlar"])
 
 with tab1:
     # --- UI ---
@@ -621,7 +647,6 @@ with tab2:
         naryad_stats['Jami Naryad'] = df.apply(count_naryad, axis=1)
         naryad_stats = naryad_stats.sort_values(by="Jami Naryad", ascending=False).reset_index(drop=True)
         st.dataframe(naryad_stats, use_container_width=True)
-        st.bar_chart(naryad_stats.set_index("ism familiya")["Jami Naryad"])
     else:
         st.warning("Hozircha hech qanday ma'lumot yo'q.")
 
@@ -645,465 +670,324 @@ with tab3:
                     count += 1
             return count
         
-        stats['Jami Navbatchilik'] = df.apply(count_navbatchilik, axis=1)
+        def count_naryad_stat(row):
+            count = 0
+            for col in date_cols:
+                val = str(row[col]).strip()
+                if val.isdigit():
+                    num = int(val)
+                    if (num >= 11 and num <= 17) or (num >= 21 and num <= 24):
+                        count += 1
+            return count
         
-        # Saralash (Eng ko'p navbatchi bo'lganlar tepad)
-        stats = stats.sort_values(by="Jami Navbatchilik", ascending=False).reset_index(drop=True)
+        stats['Navbatchilik'] = df.apply(count_navbatchilik, axis=1)
+        stats['Naryad'] = df.apply(count_naryad_stat, axis=1)
+        stats['Jami'] = stats['Navbatchilik'] + stats['Naryad']
+        
+        # Saralash (Eng ko'p navbatchi bo'lganlar tepada)
+        stats = stats.sort_values(by="Jami", ascending=False).reset_index(drop=True)
         
         st.dataframe(stats, use_container_width=True)
+    
+    # ============================================================================
+    # XONALAR BO'YICHA STATISTIKA
+    # ============================================================================
+    st.markdown("---")
+    st.subheader("🏠 Xonalar Bo'yicha Statistika")
+    
+    if date_cols:
+        # Xonalarni guruhlash
+        xona_stats = df.groupby('xona').apply(
+            lambda x: pd.Series({
+                'Talabalar soni': len(x),
+                'Navbatchilik': x.apply(count_navbatchilik, axis=1).sum(),
+                'Naryad': x.apply(count_naryad_stat, axis=1).sum()
+            })
+        ).reset_index()
+        xona_stats['Jami'] = xona_stats['Navbatchilik'] + xona_stats['Naryad']
+        xona_stats = xona_stats.sort_values(by='Jami', ascending=False).reset_index(drop=True)
         
-        # Grafik
-        st.bar_chart(stats.set_index("ism familiya")["Jami Navbatchilik"])
+        st.dataframe(xona_stats, use_container_width=True)
+    
+    # ============================================================================
+    # TALABANI QIDIRISH
+    # ============================================================================
+    st.markdown("---")
+    st.subheader("🔍 Talabani Qidirish")
+    
+    search_student_options = sorted(df.apply(lambda x: f"{x['ism familiya']} ({x['xona']})", axis=1).tolist())
+    
+    # Session state
+    if "show_student_details" not in st.session_state:
+        st.session_state.show_student_details = False
+        st.session_state.selected_student_name = None
+    
+    # Qidirish formasi - form ichida sahifa yangilanmaydi
+    with st.form("search_form"):
+        search_col1, search_col2 = st.columns([4, 1])
+        
+        with search_col1:
+            selected_search = st.selectbox(
+                "Talabani tanlang",
+                options=search_student_options,
+                placeholder="Ism yoki xona raqamini yozing...",
+                key="search_student_stats",
+                label_visibility="collapsed"
+            )
+        
+        with search_col2:
+            search_submitted = st.form_submit_button("🔍 Qidirish", type="primary", use_container_width=True)
+        
+        if search_submitted:
+            st.session_state.show_student_details = True
+            st.session_state.selected_student_name = selected_search
+    
+    # Agar qidirilgan bo'lsa, natijani ko'rsatish
+    if st.session_state.show_student_details and st.session_state.selected_student_name and date_cols:
+        selected_search = st.session_state.selected_student_name
+        
+        # Tanlangan talabani topish
+        search_idx = search_student_options.index(selected_search)
+        student_row = df.iloc[search_idx]
+        student_name = student_row['ism familiya']
+        student_xona = student_row['xona']
+        
+        st.markdown("---")
+        st.markdown(f"### 👤 {student_name}")
+        st.info(f"🏠 Xona: {student_xona}")
+        
+        # Joy nomlari
+        joy_nomlari = {
+            1: "🍳 Katta Oshxona",
+            2: "🥪 Kichik Oshxona", 
+            3: "🚿 Katta Dush",
+            4: "🛁 Kichik Dush",
+            11: "🏠 Qo'shimcha Zal",
+            12: "🪜 Zina",
+            13: "🧹 Kirxona",
+            14: "🥕 Sabzavotxona",
+            15: "📚 Manaviyat",
+            16: "📦 Kladovka",
+            21: "🍳 K.Oshxona (Naryad)",
+            22: "🥪 Ki.Oshxona (Naryad)",
+            23: "🚿 K.Dush (Naryad)",
+            24: "🛁 Ki.Dush (Naryad)"
+        }
+        
+        # Statistikani hisoblash - sanalar bilan
+        navbatchilik_count = 0
+        naryad_count = 0
+        joy_statistika = {}  # {joy_nomi: [sana1, sana2, ...]}
+        
+        for col in date_cols:
+            val = str(student_row[col]).strip()
+            if val.isdigit():
+                num = int(val)
+                joy_nomi = joy_nomlari.get(num, f"Noma'lum ({num})")
+                
+                if num >= 1 and num <= 4:
+                    navbatchilik_count += 1
+                elif (num >= 11 and num <= 17) or (num >= 21 and num <= 24):
+                    naryad_count += 1
+                
+                # Sanani qo'shish
+                if joy_nomi not in joy_statistika:
+                    joy_statistika[joy_nomi] = []
+                joy_statistika[joy_nomi].append(col)
+        
+        # Umumiy statistika
+        col1, col2, col3 = st.columns(3)
+        col1.metric("📝 Navbatchilik", navbatchilik_count)
+        col2.metric("🛠️ Naryad", naryad_count)
+        col3.metric("📊 Jami", navbatchilik_count + naryad_count)
+        
+        # Joy bo'yicha batafsil taqsimot
+        if joy_statistika:
+            st.markdown("#### 📍 Batafsil Ma'lumot:")
+            
+            # Saralash (eng ko'p birinchi)
+            sorted_joy = sorted(joy_statistika.items(), key=lambda x: len(x[1]), reverse=True)
+            
+            for joy, sanalar in sorted_joy:
+                soni = len(sanalar)
+                sanalar_str = ", ".join(sanalar)
+                
+                # Expander ichida ko'rsatish
+                with st.expander(f"{joy} - **{soni} marta**", expanded=False):
+                    st.markdown(f"**📅 Sanalar:** {sanalar_str}")
+                    
+                    # Jadval ko'rinishida
+                    if soni > 0:
+                        for i, sana in enumerate(sanalar, 1):
+                            st.write(f"  {i}. {sana}")
+        else:
+            st.info("Bu talaba hali hech qayerga tayinlanmagan")
+        
+        # Yopish tugmasi
+        if st.button("❌ Yopish", key="close_student_details"):
+            st.session_state.show_student_details = False
+            st.session_state.selected_student_name = None
+            st.rerun()
 
 # ============================================================================
-# YO'QLAMA TIZIMI - FACE RECOGNITION
+# XABARLAR BO'LIMI - SMS Yuborish
 # ============================================================================
 with tab4:
-    st.subheader("📸 Face ID Yo'qlama Tizimi")
+    st.subheader("📨 Xabarlar - Tanlangan Talabalarga SMS Yuborish")
+    st.info("📌 Xabar yozing va qaysi talabalarga yuborishni tanlang. SMS navbatga qo'shiladi.")
     
-    # Sub-tablar (yangi tartib)
-    yoqlama_tab1, yoqlama_tab2, yoqlama_tab3 = st.tabs([
-        "📸 Yo'qlama Olish",
-        "📋 Yo'qlama Tarixi",
-        "👤 Talaba Ro'yxatdan O'tkazish"
-    ])
+    # Talabalar ro'yxati
+    xabar_student_options = sorted(df.apply(lambda x: f"{x['ism familiya']} ({x['xona']})", axis=1).tolist())
     
-    # --- YO'QLAMA OLISH (1-tab) ---
-    with yoqlama_tab1:
-        st.markdown("### 📸 Yo'qlama Olish")
-        st.info("📌 Kamerani oching yoki rasm yuklang. Tizim avtomatik yuzlarni aniqlaydi.")
-        
-        # Rasm olish usuli
-        input_method = st.radio(
-            "Rasm olish usuli",
-            ["📷 Kameradan olish", "📁 Fayl yuklash"],
-            horizontal=True,
-            key="attendance_method"
-        )
-        
-        frame_image = None
-        
-        if input_method == "📷 Kameradan olish":
-            camera_image = st.camera_input("📷 Guruh rasmini oling")
-            if camera_image:
-                frame_image = camera_image.read()
-        else:
-            uploaded_frame = st.file_uploader(
-                "Guruh rasmini yuklang",
-                type=["jpg", "jpeg", "png"],
-                key="attendance_image"
-            )
-            if uploaded_frame:
-                st.image(uploaded_frame, caption="Yuklangan guruh rasmi", use_container_width=True)
-                frame_image = uploaded_frame.read()
-        
-        if st.button("🔍 Yo'qlama Olish", type="primary", disabled=frame_image is None):
-            if frame_image:
-                with st.spinner("Yuzlar aniqlanmoqda..."):
-                    try:
-                        import base64
-                        import requests
-                        
-                        image_base64 = base64.b64encode(frame_image).decode()
-                        
-                        # Avval lokal serverga urinish
-                        server_urls = [
-                            "http://localhost:5000/api/attendance",  # Lokal
-                        ]
-                        
-                        result = None
-                        server_found = False
-                        
-                        for url in server_urls:
-                            try:
-                                response = requests.post(
-                                    url,
-                                    json={"frame": image_base64},
-                                    timeout=30
-                                )
-                                if response.status_code == 200:
-                                    result = response.json()
-                                    server_found = True
-                                    break
-                            except:
-                                continue
-                        
-                        if not server_found or not result:
-                            st.error("⚠️ Server ishlamayapti!")
-                            st.info("📌 Kompyuterda START_SERVER.vbs ni ishga tushiring")
-                            st.stop()
-                        
-                        if not result.get("success", False):
-                            st.error(f"❌ {result.get('message', 'Xatolik')}")
-                            st.stop()
-                        
-                        # Natijalar
-                        col1, col2, col3 = st.columns(3)
-                        col1.metric("👥 Jami", result.get("total", 0))
-                        col2.metric("✅ Borlar", result.get("present_count", 0))
-                        col3.metric("❌ Yo'qlar", result.get("absent_count", 0))
-                        
-                        st.markdown("---")
-                        
-                        c1, c2 = st.columns(2)
-                        with c1:
-                            st.markdown("### ✅ Kelganlar")
-                            if result.get("present"):
-                                for p in result["present"]:
-                                    st.write(f"✅ {p['name']}")
-                            else:
-                                st.warning("Hech kim aniqlanmadi")
-                        
-                        with c2:
-                            st.markdown("### ❌ Kelmayganlar")
-                            if result.get("absent"):
-                                for a in result["absent"]:
-                                    st.write(f"❌ {a['name']}")
-                            else:
-                                st.success("Hamma kelgan!")
-                        
-                        log_activity("Yo'qlama olindi", f"Borlar: {result.get('present_count', 0)}, Yo'qlar: {result.get('absent_count', 0)}")
-                        
-                    except Exception as e:
-                        st.error(f"Xatolik: {e}")
-                        st.info("📌 Server ishga tushirilganligini tekshiring")
-    
-    # --- YO'QLAMA TARIXI (2-tab) ---
-    with yoqlama_tab2:
-        st.markdown("### 📋 Yo'qlama Tarixi")
-        st.info("🚧 Bu bo'lim tez orada qo'shiladi...")
-        # TODO: Google Sheetsda yo'qlama tarixini saqlash
-    
-    # --- TALABA RO'YXATDAN O'TKAZISH (3-tab) ---
-    with yoqlama_tab3:
-        st.markdown("### 👤 Talaba Yuzini Ro'yxatdan O'tkazish")
-        st.info("📌 Har bir talabani bir marta ro'yxatdan o'tkazish kerak.")
-        
-        # Talaba tanlash
-        student_options_for_face = sorted(df.apply(lambda x: f"{x['ism familiya']} ({x['xona']})", axis=1).tolist())
-        selected_student = st.selectbox(
-            "Talabani tanlang",
-            options=student_options_for_face,
-            placeholder="Ism yoki xona raqamini yozing...",
-            key="register_student"
+    with st.form("xabar_form"):
+        # Xabar matni
+        st.markdown("##### ✍️ Xabar Matni")
+        xabar_matni = st.text_area(
+            "Xabarni kiriting",
+            placeholder="Masalan: Hamma xonasiga qarasin! Bugun tekshiruv bo'ladi.",
+            height=100,
+            help="Bu xabar tanlangan barcha talabalarga SMS orqali yuboriladi"
         )
         
         st.markdown("---")
         
-        # Rasm olish usuli
-        register_method = st.radio(
-            "Rasm olish usuli",
-            ["📷 Kameradan olish", "📁 Fayl yuklash"],
-            horizontal=True,
-            key="register_method"
+        # Tez tanlash
+        st.markdown("##### 👥 Qabul qiluvchilar")
+        
+        tez_tanlash = st.radio(
+            "Tanlash usuli",
+            ["🎯 Alohida tanlash", "👥 Hammaga yuborish"],
+            horizontal=True
         )
         
-        face_image = None
-        face_detected = False
-        
-        if register_method == "📷 Kameradan olish":
-            camera_face = st.camera_input("📷 Talaba yuzini rasmga oling", key="register_camera")
-            if camera_face:
-                face_image = camera_face.read()
-        else:
-            uploaded_face = st.file_uploader(
-                "Talaba yuz rasmini yuklang",
-                type=["jpg", "jpeg", "png"],
-                help="Aniq ko'rinadigan yuz rasmi yuklang",
-                key="register_upload"
+        if tez_tanlash == "🎯 Alohida tanlash":
+            # Alohida talabalar tanlash
+            tanlangan_talabalar = st.multiselect(
+                "Talabalarni tanlang",
+                options=xabar_student_options,
+                placeholder="Ism yoki xona raqamini yozing...",
+                help="Bir nechta talaba tanlashingiz mumkin"
             )
-            if uploaded_face:
-                face_image = uploaded_face.read()
+        else:
+            tanlangan_talabalar = xabar_student_options  # Hammasi
+            st.success(f"✅ Barcha {len(xabar_student_options)} ta talaba tanlandi")
         
-        # Yuz aniqlash va ko'rsatish
-        if face_image:
+        xabar_submitted = st.form_submit_button("📤 Xabarni Yuborish", type="primary")
+    
+    if xabar_submitted:
+        if not xabar_matni.strip():
+            st.warning("⚠️ Xabar matnini kiriting!")
+        elif not tanlangan_talabalar:
+            st.warning("⚠️ Kamida bitta talaba tanlang!")
+        else:
             try:
-                import base64
-                import sys
-                import os
+                queue_sheet = get_queue_sheet()
+                timestamp = (datetime.now() + timedelta(hours=5)).strftime("%Y-%m-%d %H:%M:%S")
                 
-                yangi_path = os.path.join(os.path.dirname(__file__), "yangi")
-                if yangi_path not in sys.path:
-                    sys.path.insert(0, yangi_path)
+                progress_bar = st.progress(0)
+                yuborilgan = 0
                 
-                try:
-                    import face_module as fm
+                for i, student_str in enumerate(tanlangan_talabalar):
+                    idx = xabar_student_options.index(student_str)
+                    phone = df.at[idx, 'telefon raqami']
                     
-                    # Yuz aniqlash
-                    image_base64 = base64.b64encode(face_image).decode()
-                    detection = fm.detect_face_in_image(image_base64)
-                    
-                    if detection["found"]:
-                        face_detected = True
-                        st.success(detection["message"])
-                        
-                        # Yashil ramkali rasmni ko'rsatish
-                        if detection["image_with_boxes"]:
-                            st.image(
-                                base64.b64decode(detection["image_with_boxes"]),
-                                caption="✅ Yuz aniqlandi!",
-                                width=300
-                            )
-                        else:
-                            # Oddiy rasmni ko'rsatish
-                            st.image(face_image, caption="✅ Yuz topildi!", width=200)
-                    else:
-                        face_detected = False
-                        st.error(detection["message"])
-                        st.image(face_image, caption="❌ Yuz topilmadi", width=200)
-                        
-                except ImportError:
-                    # Face module yuklanmasa, oddiy ko'rsatish
-                    st.image(face_image, caption="Yuklangan rasm", width=200)
-                    st.warning("⚠️ Yuz aniqlash moduli yuklanmadi. Lekin davom etishingiz mumkin.")
-                    face_detected = True  # Davom etish imkonini berish
-                    
+                    # SMS navbatga qo'shish
+                    queue_sheet.append_row([phone, xabar_matni.strip(), "PENDING", timestamp])
+                    yuborilgan += 1
+                    progress_bar.progress((i + 1) / len(tanlangan_talabalar))
+                
+                # Admin xabari
+                send_telegram_alert(f"📨 YANGI XABAR YUBORILDI!\n\n👥 {yuborilgan} ta talabaga\n📝 Xabar: {xabar_matni[:50]}...\n\n📲 SMS Widget tugmasini bosing!")
+                
+                st.success(f"✅ Xabar {yuborilgan} ta talabaga navbatga qo'shildi!")
+                st.info("📱 Telefoningiz internetga ulanganda SMSlar avtomatik yuboriladi.")
+                
+                log_activity("Xabar yuborildi", f"{yuborilgan} ta talabaga: {xabar_matni[:30]}...")
+                
             except Exception as e:
-                st.image(face_image, caption="Yuklangan rasm", width=200)
-                st.warning(f"⚠️ Yuz tekshirib bo'lmadi: {e}")
-                face_detected = True  # Davom etish imkonini berish
-        
-        if st.button("✅ Ro'yxatdan O'tkazish", type="primary", disabled=face_image is None):
-            if selected_student and face_image:
-                try:
-                    import base64
-                    import sys
-                    import os
-                    
-                    yangi_path = os.path.join(os.path.dirname(__file__), "yangi")
-                    if yangi_path not in sys.path:
-                        sys.path.insert(0, yangi_path)
-                    
-                    try:
-                        import face_module as fm
-                        
-                        student_idx = student_options_for_face.index(selected_student)
-                        student_id = str(student_idx).zfill(3)
-                        student_name = selected_student.split(" (")[0]
-                        
-                        image_base64 = base64.b64encode(face_image).decode()
-                        result = fm.register_student(student_id, student_name, image_base64)
-                        
-                        if result["success"]:
-                            st.success(result["message"])
-                            log_activity("Yo'qlama ro'yxatidan o'tkazish", f"{student_name} ro'yxatdan o'tdi")
-                        else:
-                            st.error(result["message"])
-                            
-                    except ImportError:
-                        st.warning("⚠️ Face recognition moduli yuklanmadi.")
-                        st.code("pip install face_recognition", language="bash")
-                        
-                except Exception as e:
-                    st.error(f"Xatolik: {e}")
-        
-        # Ro'yxatdan o'tgan talabalar
+                st.error(f"Xatolik: {e}")
+    
+    # Qo'shimcha: Tayyor shablonlar bilan tugmalar
+    st.markdown("---")
+    st.markdown("##### 📋 Tez Yuborish Shablonlari")
+    st.info("👆 Tugmani bosing, talabalarni tanlang va xabar avtomatik yuboriladi!")
+    
+    # Shablonlar ro'yxati
+    shablonlar = [
+        ("🏠", "Xonangizga qarang, tekshiruv bo'ladi!"),
+        ("🚿", "Dush soat 22:00 da yopiladi"),
+        ("📚", "Ertaga dars bo'lmaydi"),
+        ("⚠️", "Zudlik bilan yig'ilishga keling!"),
+        ("🔔", "Komendant chaqirmoqda"),
+        ("📞", "Telefon raqamingizni yangilang"),
+    ]
+    
+    # Session state uchun
+    if "shablon_xabar" not in st.session_state:
+        st.session_state.shablon_xabar = None
+    
+    # Tugmalar qatori
+    shablon_cols = st.columns(3)
+    
+    for i, (emoji, matn) in enumerate(shablonlar):
+        col_idx = i % 3
+        with shablon_cols[col_idx]:
+            if st.button(f"{emoji} {matn[:20]}...", key=f"shablon_{i}", use_container_width=True):
+                st.session_state.shablon_xabar = matn
+    
+    # Agar shablon tanlangan bo'lsa
+    if st.session_state.shablon_xabar:
         st.markdown("---")
-        st.markdown("### 📋 Ro'yxatdan O'tgan Talabalar")
+        st.success(f"📝 Tanlangan xabar: **{st.session_state.shablon_xabar}**")
         
-        try:
-            import sys
-            import os
-            yangi_path = os.path.join(os.path.dirname(__file__), "yangi")
-            if yangi_path not in sys.path:
-                sys.path.insert(0, yangi_path)
-            
-            try:
-                import face_module as fm
-                registered = fm.get_registered_students()
-                
-                if registered:
-                    st.success(f"✅ Jami: {len(registered)} talaba ro'yxatdan o'tgan")
-                    for s in registered:
-                        col1, col2 = st.columns([4, 1])
-                        col1.write(f"👤 {s['name']}")
-                        if col2.button("🗑️", key=f"del_{s['id']}"):
-                            fm.delete_student(s['id'])
-                            st.rerun()
-                else:
-                    st.info("Hali hech kim ro'yxatdan o'tmagan")
-            except ImportError:
-                st.info("📌 Face recognition moduli hali o'rnatilmagan")
-        except:
-            st.info("📌 Ro'yxatdagi talabalarni ko'rish uchun lokal server kerak")
+        shablon_talabalar_options = sorted(df.apply(lambda x: f"{x['ism familiya']} ({x['xona']})", axis=1).tolist())
         
-        # --- MA'LUMOTNI TAHRIRLASH ---
-        st.markdown("---")
-        st.markdown("### ✏️ Talaba Ma'lumotlarini Tahrirlash")
-        st.info("📌 Ism, familiya, xona raqami yoki yuz rasmini o'zgartirish uchun talabani tanlang.")
-        
-        # Qidiruv
-        search_query = st.text_input(
-            "🔍 Qidirish",
-            placeholder="Ism, familiya yoki xona raqamini kiriting...",
-            key="search_student"
+        shablon_tanlash = st.radio(
+            "Kimga yuborish?",
+            ["🎯 Alohida tanlash", "👥 Hammaga"],
+            horizontal=True,
+            key="shablon_qabul"
         )
         
-        # Filtrlash
-        if search_query:
-            filtered_students = df[
-                df['ism familiya'].str.contains(search_query, case=False, na=False) |
-                df['xona'].astype(str).str.contains(search_query, case=False, na=False)
-            ]
-        else:
-            filtered_students = df
-        
-        if len(filtered_students) > 0:
-            # Talabani tanlash
-            edit_options = filtered_students.apply(
-                lambda x: f"{x['ism familiya']} ({x['xona']})", axis=1
-            ).tolist()
-            
-            selected_for_edit = st.selectbox(
-                "Tahrirlash uchun talabani tanlang",
-                options=edit_options,
-                key="edit_student_select"
+        if shablon_tanlash == "🎯 Alohida tanlash":
+            shablon_talabalar = st.multiselect(
+                "Talabalarni tanlang",
+                options=shablon_talabalar_options,
+                placeholder="Ism yoki xona raqamini yozing...",
+                key="shablon_talabalar_select"
             )
-            
-            if selected_for_edit:
-                # Tanlangan talabaning indeksini topish
-                selected_idx = edit_options.index(selected_for_edit)
-                original_row = filtered_students.iloc[selected_idx]
-                
-                # Joriy ma'lumotlarni ko'rsatish
-                st.markdown(f"**📋 Joriy ma'lumotlar:**")
-                
-                # Joriy yuz rasmini ko'rsatish
-                import os as os_module
-                faces_dir = os_module.path.join(os_module.path.dirname(__file__), "yangi", "faces")
-                
-                # Talaba ID sini topish
-                original_df_idx = df[
-                    (df['ism familiya'] == original_row['ism familiya']) &
-                    (df['xona'].astype(str) == str(original_row['xona']))
-                ].index[0]
-                current_student_id = str(original_df_idx).zfill(3)
-                current_face_path = os_module.path.join(faces_dir, f"{current_student_id}.jpg")
-                
-                img_col, info_col = st.columns([1, 3])
-                
-                with img_col:
-                    if os_module.path.exists(current_face_path):
-                        st.image(current_face_path, caption="Joriy rasm", width=100)
-                    else:
-                        st.info("📷 Rasm yo'q")
-                
-                with info_col:
-                    st.info(f"👤 {original_row['ism familiya']}")
-                    st.info(f"🏠 Xona: {original_row['xona']}")
-                    if 'telefon raqami' in original_row:
-                        st.info(f"📱 {original_row['telefon raqami']}")
-                
-                st.markdown("---")
-                st.markdown("**✏️ Yangi ma'lumotlarni kiriting:**")
-                
-                # Tahrirlash formasi
-                col1, col2 = st.columns(2)
-                
-                with col1:
-                    new_name = st.text_input(
-                        "Ism Familiya",
-                        value=original_row['ism familiya'],
-                        key=f"edit_name_{selected_idx}"
-                    )
-                
-                with col2:
-                    new_xona = st.text_input(
-                        "Xona raqami",
-                        value=str(original_row['xona']),
-                        key=f"edit_xona_{selected_idx}"
-                    )
-                
-                # Telefon raqami
-                if 'telefon raqami' in original_row:
-                    new_phone = st.text_input(
-                        "Telefon raqami",
-                        value=str(original_row['telefon raqami']),
-                        key=f"edit_phone_{selected_idx}"
-                    )
-                else:
-                    new_phone = None
-                
-                # Yuz rasmini o'zgartirish
-                st.markdown("---")
-                st.markdown("**📷 Yuz Rasmini O'zgartirish (ixtiyoriy):**")
-                
-                edit_face_method = st.radio(
-                    "Rasm olish usuli",
-                    ["❌ O'zgartirmaslik", "📷 Kameradan olish", "📁 Fayl yuklash"],
-                    horizontal=True,
-                    key=f"edit_face_method_{selected_idx}"
-                )
-                
-                new_face_image = None
-                
-                if edit_face_method == "📷 Kameradan olish":
-                    edit_camera = st.camera_input("📷 Yangi yuz rasmi", key=f"edit_camera_{selected_idx}")
-                    if edit_camera:
-                        new_face_image = edit_camera.read()
-                elif edit_face_method == "📁 Fayl yuklash":
-                    edit_upload = st.file_uploader(
-                        "Yangi yuz rasmini yuklang",
-                        type=["jpg", "jpeg", "png"],
-                        key=f"edit_upload_{selected_idx}"
-                    )
-                    if edit_upload:
-                        st.image(edit_upload, caption="Yangi rasm", width=150)
-                        new_face_image = edit_upload.read()
-                
-                # Saqlash tugmasi
-                if st.button("💾 O'zgarishlarni Saqlash", type="primary", key=f"save_edit_{selected_idx}"):
+        else:
+            shablon_talabalar = shablon_talabalar_options
+            st.info(f"✅ Barcha {len(shablon_talabalar_options)} ta talaba tanlandi")
+        
+        col_send, col_cancel = st.columns(2)
+        
+        with col_send:
+            if st.button("📤 Yuborish", type="primary", use_container_width=True, key="shablon_send"):
+                if shablon_talabalar:
                     try:
-                        # Google Sheetdagi qatorni yangilash
-                        original_df_idx = df[
-                            (df['ism familiya'] == original_row['ism familiya']) &
-                            (df['xona'].astype(str) == str(original_row['xona']))
-                        ].index[0]
+                        queue_sheet = get_queue_sheet()
+                        timestamp = (datetime.now() + timedelta(hours=5)).strftime("%Y-%m-%d %H:%M:%S")
                         
-                        sheet = get_main_sheet()
-                        row_number = original_df_idx + 2  # Header + 0-index
+                        for student_str in shablon_talabalar:
+                            idx = shablon_talabalar_options.index(student_str)
+                            phone = df.at[idx, 'telefon raqami']
+                            queue_sheet.append_row([phone, st.session_state.shablon_xabar, "PENDING", timestamp])
                         
-                        # Ism Familiyani yangilash (1-ustun)
-                        sheet.update_cell(row_number, 1, new_name)
+                        send_telegram_alert(f"📨 TEZ XABAR!\\n\\n👥 {len(shablon_talabalar)} ta talabaga\\n📝 {st.session_state.shablon_xabar}\\n\\n📲 SMS Widget!")
                         
-                        # Xonani yangilash (2-ustun)
-                        sheet.update_cell(row_number, 2, new_xona)
-                        
-                        # Telefon raqamini yangilash (3-ustun)
-                        if new_phone:
-                            sheet.update_cell(row_number, 3, new_phone)
-                        
-                        # Yuz rasmini yangilash
-                        if new_face_image:
-                            try:
-                                import base64
-                                import sys
-                                import os
-                                
-                                yangi_path = os.path.join(os.path.dirname(__file__), "yangi")
-                                if yangi_path not in sys.path:
-                                    sys.path.insert(0, yangi_path)
-                                
-                                import face_module as fm
-                                
-                                student_id = str(original_df_idx).zfill(3)
-                                image_base64 = base64.b64encode(new_face_image).decode()
-                                
-                                # Eski yuzni o'chirish va yangisini qo'shish
-                                fm.delete_student(student_id)
-                                fm.register_student(student_id, new_name, image_base64)
-                                
-                                st.success(f"✅ {new_name} - ma'lumotlar va yuz rasmi yangilandi!")
-                            except ImportError:
-                                st.success(f"✅ {new_name} ma'lumotlari saqlandi! (Yuz rasmi alohida o'zgartiring)")
-                        else:
-                            st.success(f"✅ {new_name} ma'lumotlari saqlandi!")
-                        
-                        log_activity("Talaba ma'lumoti tahrirlandi", f"{original_row['ism familiya']} → {new_name}")
+                        st.success(f"✅ {len(shablon_talabalar)} ta talabaga yuborildi!")
+                        log_activity("Tez xabar", f"{len(shablon_talabalar)} talabaga: {st.session_state.shablon_xabar[:30]}...")
+                        st.session_state.shablon_xabar = None
                         st.rerun()
                         
                     except Exception as e:
                         st.error(f"Xatolik: {e}")
-        else:
-            st.warning("Qidiruv natijasi topilmadi")
+                else:
+                    st.warning("⚠️ Kamida bitta talaba tanlang!")
+        
+        with col_cancel:
+            if st.button("❌ Bekor qilish", use_container_width=True, key="shablon_cancel"):
+                st.session_state.shablon_xabar = None
+                st.rerun()
 

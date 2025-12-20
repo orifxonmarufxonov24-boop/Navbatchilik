@@ -1,7 +1,7 @@
 {
-    "version": "1.2.0",
-    "versionCode": 3,
-    "releaseNotes": "Yangi: Face ID Yo'qlama tizimi, Kamera qo'llab-quvvatlash",
+    "version": "1.4.0",
+    "versionCode": 5,
+    "releaseNotes": "Yangi: Xonalar statistikasi, Talaba qidirish, Yashil tugmalar, Tez SMS shablonlar",
     "downloadUrl": "https://github.com/orifxonmarufxonov24-boop/Navbatchilik/releases/latest/download/app-release.apk",
     "forceUpdate": false
 }
