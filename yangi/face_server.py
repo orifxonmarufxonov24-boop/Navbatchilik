@@ -97,7 +97,7 @@ def recognize_faces():
 @app.route("/api/attendance", methods=["POST"])
 def take_attendance():
     """
-    Yo'qlama olish
+    Yo'qlama olish (DeepFace bilan)
     
     Body:
         {
@@ -111,8 +111,14 @@ def take_attendance():
         if not frame:
             return jsonify({"success": False, "message": "Rasm kerak!"})
         
-        result = fm.take_attendance(frame)
-        result["success"] = True
+        # Avval DeepFace bilan sinab ko'rish
+        if hasattr(fm, 'take_attendance_deepface') and fm.DEEPFACE_AVAILABLE:
+            result = fm.take_attendance_deepface(frame)
+        else:
+            # DeepFace yo'q bo'lsa oddiy funksiya
+            result = fm.take_attendance(frame)
+            result["success"] = True
+        
         return jsonify(result)
     
     except Exception as e:

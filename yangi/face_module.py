@@ -21,6 +21,15 @@ except ImportError:
     FACE_RECOGNITION_AVAILABLE = False
     print("[WARNING] face_recognition kutubxonasi ornatilmagan!")
 
+# DeepFace o'rnatilganligini tekshirish
+try:
+    from deepface import DeepFace
+    DEEPFACE_AVAILABLE = True
+    print("[INFO] DeepFace yuklandi - yuz tanish ishlaydi")
+except ImportError:
+    DEEPFACE_AVAILABLE = False
+    print("[WARNING] DeepFace ornatilmagan - yuz tanish ishlamaydi")
+
 # Sozlamalar
 FACES_DIR = os.path.join(os.path.dirname(__file__), "faces")
 ENCODINGS_FILE = os.path.join(os.path.dirname(__file__), "face_encodings.pkl")
@@ -374,9 +383,168 @@ def delete_student(student_id):
     return {"success": False, "message": "Talaba topilmadi"}
 
 
+def take_attendance_deepface(frame_image):
+    """
+    DeepFace bilan yo'qlama olish
+    
+    Args:
+        frame_image: Guruh rasmi (base64 yoki fayl yo'li)
+    
+    Returns:
+        dict: {"present": [...], "absent": [...], "total": N}
+    """
+    if not DEEPFACE_AVAILABLE:
+        return {"success": False, "message": "DeepFace o'rnatilmagan!", "present": [], "absent": []}
+    
+    import cv2
+    import tempfile
+    
+    try:
+        # Rasmni vaqtincha faylga saqlash
+        if isinstance(frame_image, str):
+            if frame_image.startswith("data:image"):
+                base64_data = frame_image.split(",")[1]
+                image_data = base64.b64decode(base64_data)
+            else:
+                image_data = base64.b64decode(frame_image)
+            
+            nparr = np.frombuffer(image_data, np.uint8)
+            image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        else:
+            image = frame_image
+        
+        if image is None:
+            return {"success": False, "message": "Rasmni yuklashda xatolik", "present": [], "absent": []}
+        
+        # Vaqtincha faylga saqlash
+        with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as tmp:
+            temp_path = tmp.name
+            cv2.imwrite(temp_path, image)
+        
+        # Ro'yxatdagi talabalar
+        all_encodings = load_all_encodings()
+        if not all_encodings:
+            os.unlink(temp_path)
+            return {"success": False, "message": "Talabalar ro'yxatdan o'tmagan", "present": [], "absent": []}
+        
+        present = []
+        absent = []
+        
+        # Har bir talabaning yuzini tekshirish
+        for student_id, data in all_encodings.items():
+            student_face_path = os.path.join(FACES_DIR, f"{student_id}.jpg")
+            
+            if os.path.exists(student_face_path):
+                try:
+                    # DeepFace bilan solishtirish
+                    result = DeepFace.verify(
+                        img1_path=temp_path,
+                        img2_path=student_face_path,
+                        model_name="VGG-Face",
+                        enforce_detection=False
+                    )
+                    
+                    if result["verified"]:
+                        present.append({"id": student_id, "name": data["name"]})
+                    else:
+                        absent.append({"id": student_id, "name": data["name"]})
+                        
+                except Exception as e:
+                    # Xatolik bo'lsa absent deb hisoblash
+                    absent.append({"id": student_id, "name": data["name"]})
+            else:
+                absent.append({"id": student_id, "name": data["name"]})
+        
+        # Vaqtincha faylni o'chirish
+        os.unlink(temp_path)
+        
+        return {
+            "success": True,
+            "present": present,
+            "absent": absent,
+            "total": len(all_encodings),
+            "present_count": len(present),
+            "absent_count": len(absent)
+        }
+        
+    except Exception as e:
+        return {"success": False, "message": f"Xatolik: {str(e)}", "present": [], "absent": []}
+
+
+def verify_single_face(frame_image, student_id):
+    """
+    Bitta talabaning yuzini tekshirish
+    
+    Args:
+        frame_image: Kamera rasmi
+        student_id: Talaba ID
+    
+    Returns:
+        dict: {"verified": bool, "name": str}
+    """
+    if not DEEPFACE_AVAILABLE:
+        return {"verified": False, "message": "DeepFace o'rnatilmagan!"}
+    
+    import cv2
+    import tempfile
+    
+    try:
+        # Rasmni vaqtincha faylga saqlash
+        if isinstance(frame_image, str):
+            if frame_image.startswith("data:image"):
+                base64_data = frame_image.split(",")[1]
+                image_data = base64.b64decode(base64_data)
+            else:
+                image_data = base64.b64decode(frame_image)
+            
+            nparr = np.frombuffer(image_data, np.uint8)
+            image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        else:
+            image = frame_image
+        
+        if image is None:
+            return {"verified": False, "message": "Rasmni yuklashda xatolik"}
+        
+        # Vaqtincha faylga saqlash
+        with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as tmp:
+            temp_path = tmp.name
+            cv2.imwrite(temp_path, image)
+        
+        # Talaba rasmini topish
+        student_face_path = os.path.join(FACES_DIR, f"{student_id}.jpg")
+        
+        if not os.path.exists(student_face_path):
+            os.unlink(temp_path)
+            return {"verified": False, "message": "Talaba rasmi topilmadi"}
+        
+        # DeepFace bilan tekshirish
+        result = DeepFace.verify(
+            img1_path=temp_path,
+            img2_path=student_face_path,
+            model_name="VGG-Face",
+            enforce_detection=False
+        )
+        
+        os.unlink(temp_path)
+        
+        all_encodings = load_all_encodings()
+        student_name = all_encodings.get(student_id, {}).get("name", "Noma'lum")
+        
+        return {
+            "verified": result["verified"],
+            "name": student_name,
+            "distance": result.get("distance", 0)
+        }
+        
+    except Exception as e:
+        return {"verified": False, "message": f"Xatolik: {str(e)}"}
+
+
 # Test uchun
 if __name__ == "__main__":
     ensure_faces_dir()
-    print(f"✅ Face Recognition Module yuklandi")
-    print(f"📁 Yuzlar papkasi: {FACES_DIR}")
-    print(f"📊 Ro'yxatdan o'tgan talabalar: {len(get_registered_students())}")
+    print(f"Face Recognition Module yuklandi")
+    print(f"Yuzlar papkasi: {FACES_DIR}")
+    print(f"Ro'yxatdan o'tgan talabalar: {len(get_registered_students())}")
+    print(f"DeepFace: {'Mavjud' if DEEPFACE_AVAILABLE else 'Mavjud emas'}")
+
