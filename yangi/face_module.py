@@ -80,9 +80,9 @@ def detect_face_in_image(image_source):
         face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
         faces = face_cascade.detectMultiScale(
             gray,
-            scaleFactor=1.1,
-            minNeighbors=5,
-            minSize=(30, 30),
+            scaleFactor=1.2,
+            minNeighbors=8,
+            minSize=(80, 80),
             flags=cv2.CASCADE_SCALE_IMAGE
         )
         
@@ -204,7 +204,7 @@ def register_student(student_id, student_name, image_source):
         # OpenCV bilan yuz tekshirish
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-        faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+        faces = face_cascade.detectMultiScale(gray, scaleFactor=1.2, minNeighbors=8, minSize=(80, 80))
         
         if len(faces) == 0:
             return {"success": False, "message": "Rasmda yuz topilmadi!"}
