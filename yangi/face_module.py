@@ -176,41 +176,69 @@ def register_student(student_id, student_name, image_source):
     Returns:
         dict: {"success": bool, "message": str}
     """
-    ensure_faces_dir()
-    
-    # Rasmni yuklash
-    if isinstance(image_source, str):
-        if os.path.exists(image_source):
-            image = load_image_from_file(image_source)
-        elif image_source.startswith("data:image"):
-            # data:image/jpeg;base64,xxxxx formatidan base64 qismini olish
-            base64_data = image_source.split(",")[1]
-            image = load_image_from_base64(base64_data)
+    try:
+        import cv2
+        ensure_faces_dir()
+        
+        # Rasmni yuklash
+        if isinstance(image_source, str):
+            if os.path.exists(image_source):
+                image = cv2.imread(image_source)
+            elif image_source.startswith("data:image"):
+                base64_data = image_source.split(",")[1]
+                image_data = base64.b64decode(base64_data)
+                nparr = np.frombuffer(image_data, np.uint8)
+                image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+            else:
+                image_data = base64.b64decode(image_source)
+                nparr = np.frombuffer(image_data, np.uint8)
+                image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        elif isinstance(image_source, np.ndarray):
+            image = image_source
         else:
-            image = load_image_from_base64(image_source)
-    elif isinstance(image_source, np.ndarray):
-        image = image_source
-    else:
-        return {"success": False, "message": "Noto'g'ri rasm formati"}
-    
-    # Yuz encodingini olish
-    encoding = encode_face(image)
-    if encoding is None:
-        return {"success": False, "message": "Rasmda yuz topilmadi!"}
-    
-    # Encodingni saqlash
-    encodings = load_all_encodings()
-    encodings[student_id] = {
-        "name": student_name,
-        "encoding": encoding
-    }
-    save_all_encodings(encodings)
-    
-    # Rasmni ham saqlash (backup uchun)
-    image_path = os.path.join(FACES_DIR, f"{student_id}.jpg")
-    Image.fromarray(image).save(image_path)
-    
-    return {"success": True, "message": f"✅ {student_name} muvaffaqiyatli ro'yxatdan o'tdi!"}
+            return {"success": False, "message": "Noto'g'ri rasm formati"}
+        
+        if image is None:
+            return {"success": False, "message": "Rasmni yuklashda xatolik"}
+        
+        # OpenCV bilan yuz tekshirish
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+        faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+        
+        if len(faces) == 0:
+            return {"success": False, "message": "Rasmda yuz topilmadi!"}
+        
+        # Rasmni saqlash
+        image_path = os.path.join(FACES_DIR, f"{student_id}.jpg")
+        cv2.imwrite(image_path, image)
+        
+        # Encoding saqlash (agar face_recognition mavjud bo'lsa)
+        if FACE_RECOGNITION_AVAILABLE:
+            # RGB ga o'tkazish (face_recognition uchun)
+            image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            encoding = encode_face(image_rgb)
+            if encoding is not None:
+                encodings = load_all_encodings()
+                encodings[student_id] = {
+                    "name": student_name,
+                    "encoding": encoding
+                }
+                save_all_encodings(encodings)
+        else:
+            # face_recognition yo'q bo'lsa, faqat metadata saqlash
+            encodings = load_all_encodings()
+            encodings[student_id] = {
+                "name": student_name,
+                "encoding": None,  # Placeholder
+                "image_path": image_path
+            }
+            save_all_encodings(encodings)
+        
+        return {"success": True, "message": f"✅ {student_name} muvaffaqiyatli ro'yxatdan o'tdi!"}
+        
+    except Exception as e:
+        return {"success": False, "message": f"Xatolik: {str(e)}"}
 
 
 def load_all_encodings():
