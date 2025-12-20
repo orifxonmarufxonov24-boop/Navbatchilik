@@ -863,7 +863,7 @@ with tab4:
         # --- MA'LUMOTNI TAHRIRLASH ---
         st.markdown("---")
         st.markdown("### ✏️ Talaba Ma'lumotlarini Tahrirlash")
-        st.info("📌 Ism, familiya yoki xona raqamini o'zgartirish uchun talabani tanlang.")
+        st.info("📌 Ism, familiya, xona raqami yoki yuz rasmini o'zgartirish uchun talabani tanlang.")
         
         # Qidiruv
         search_query = st.text_input(
@@ -898,63 +898,124 @@ with tab4:
                 selected_idx = edit_options.index(selected_for_edit)
                 original_row = filtered_students.iloc[selected_idx]
                 
+                # Joriy ma'lumotlarni ko'rsatish
+                st.markdown(f"**📋 Joriy ma'lumotlar:**")
+                info_col1, info_col2, info_col3 = st.columns(3)
+                info_col1.info(f"👤 {original_row['ism familiya']}")
+                info_col2.info(f"🏠 Xona: {original_row['xona']}")
+                if 'telefon raqami' in original_row:
+                    info_col3.info(f"📱 {original_row['telefon raqami']}")
+                
+                st.markdown("---")
+                st.markdown("**✏️ Yangi ma'lumotlarni kiriting:**")
+                
                 # Tahrirlash formasi
-                with st.form("edit_student_form"):
-                    col1, col2 = st.columns(2)
-                    
-                    with col1:
-                        new_name = st.text_input(
-                            "Ism Familiya",
-                            value=original_row['ism familiya'],
-                            key="edit_name"
-                        )
-                    
-                    with col2:
-                        new_xona = st.text_input(
-                            "Xona raqami",
-                            value=str(original_row['xona']),
-                            key="edit_xona"
-                        )
-                    
-                    # Telefon raqami (agar mavjud bo'lsa)
-                    if 'telefon raqami' in original_row:
-                        new_phone = st.text_input(
-                            "Telefon raqami",
-                            value=str(original_row['telefon raqami']),
-                            key="edit_phone"
-                        )
-                    else:
-                        new_phone = None
-                    
-                    submit_edit = st.form_submit_button("💾 Saqlash", type="primary")
-                    
-                    if submit_edit:
-                        try:
-                            # Google Sheetdagi qatorni yangilash
-                            # Asl DataFrame dagi indeksni topish
-                            original_df_idx = df[
-                                (df['ism familiya'] == original_row['ism familiya']) &
-                                (df['xona'].astype(str) == str(original_row['xona']))
-                            ].index[0]
-                            
-                            sheet = get_main_sheet()
-                            row_number = original_df_idx + 2  # Header + 0-index
-                            
-                            # Ism Familiyani yangilash (1-ustun)
-                            sheet.update_cell(row_number, 1, new_name)
-                            
-                            # Xonani yangilash (2-ustun)
-                            sheet.update_cell(row_number, 2, new_xona)
-                            
-                            # Telefon raqamini yangilash (3-ustun)
-                            if new_phone:
-                                sheet.update_cell(row_number, 3, new_phone)
-                            
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    new_name = st.text_input(
+                        "Ism Familiya",
+                        value=original_row['ism familiya'],
+                        key=f"edit_name_{selected_idx}"
+                    )
+                
+                with col2:
+                    new_xona = st.text_input(
+                        "Xona raqami",
+                        value=str(original_row['xona']),
+                        key=f"edit_xona_{selected_idx}"
+                    )
+                
+                # Telefon raqami
+                if 'telefon raqami' in original_row:
+                    new_phone = st.text_input(
+                        "Telefon raqami",
+                        value=str(original_row['telefon raqami']),
+                        key=f"edit_phone_{selected_idx}"
+                    )
+                else:
+                    new_phone = None
+                
+                # Yuz rasmini o'zgartirish
+                st.markdown("---")
+                st.markdown("**📷 Yuz Rasmini O'zgartirish (ixtiyoriy):**")
+                
+                edit_face_method = st.radio(
+                    "Rasm olish usuli",
+                    ["❌ O'zgartirmaslik", "📷 Kameradan olish", "📁 Fayl yuklash"],
+                    horizontal=True,
+                    key=f"edit_face_method_{selected_idx}"
+                )
+                
+                new_face_image = None
+                
+                if edit_face_method == "📷 Kameradan olish":
+                    edit_camera = st.camera_input("📷 Yangi yuz rasmi", key=f"edit_camera_{selected_idx}")
+                    if edit_camera:
+                        new_face_image = edit_camera.read()
+                elif edit_face_method == "📁 Fayl yuklash":
+                    edit_upload = st.file_uploader(
+                        "Yangi yuz rasmini yuklang",
+                        type=["jpg", "jpeg", "png"],
+                        key=f"edit_upload_{selected_idx}"
+                    )
+                    if edit_upload:
+                        st.image(edit_upload, caption="Yangi rasm", width=150)
+                        new_face_image = edit_upload.read()
+                
+                # Saqlash tugmasi
+                if st.button("💾 O'zgarishlarni Saqlash", type="primary", key=f"save_edit_{selected_idx}"):
+                    try:
+                        # Google Sheetdagi qatorni yangilash
+                        original_df_idx = df[
+                            (df['ism familiya'] == original_row['ism familiya']) &
+                            (df['xona'].astype(str) == str(original_row['xona']))
+                        ].index[0]
+                        
+                        sheet = get_main_sheet()
+                        row_number = original_df_idx + 2  # Header + 0-index
+                        
+                        # Ism Familiyani yangilash (1-ustun)
+                        sheet.update_cell(row_number, 1, new_name)
+                        
+                        # Xonani yangilash (2-ustun)
+                        sheet.update_cell(row_number, 2, new_xona)
+                        
+                        # Telefon raqamini yangilash (3-ustun)
+                        if new_phone:
+                            sheet.update_cell(row_number, 3, new_phone)
+                        
+                        # Yuz rasmini yangilash
+                        if new_face_image:
+                            try:
+                                import base64
+                                import sys
+                                import os
+                                
+                                yangi_path = os.path.join(os.path.dirname(__file__), "yangi")
+                                if yangi_path not in sys.path:
+                                    sys.path.insert(0, yangi_path)
+                                
+                                import face_module as fm
+                                
+                                student_id = str(original_df_idx).zfill(3)
+                                image_base64 = base64.b64encode(new_face_image).decode()
+                                
+                                # Eski yuzni o'chirish va yangisini qo'shish
+                                fm.delete_student(student_id)
+                                fm.register_student(student_id, new_name, image_base64)
+                                
+                                st.success(f"✅ {new_name} - ma'lumotlar va yuz rasmi yangilandi!")
+                            except ImportError:
+                                st.success(f"✅ {new_name} ma'lumotlari saqlandi! (Yuz rasmi alohida o'zgartiring)")
+                        else:
                             st.success(f"✅ {new_name} ma'lumotlari saqlandi!")
-                            log_activity("Talaba ma'lumoti tahrirlandi", f"{original_row['ism familiya']} → {new_name}")
-                            st.rerun()
-                            
-                        except Exception as e:
-                            st.error(f"Xatolik: {e}")
+                        
+                        log_activity("Talaba ma'lumoti tahrirlandi", f"{original_row['ism familiya']} → {new_name}")
+                        st.rerun()
+                        
+                    except Exception as e:
+                        st.error(f"Xatolik: {e}")
         else:
             st.warning("Qidiruv natijasi topilmadi")
+
