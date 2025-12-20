@@ -702,52 +702,71 @@ with tab4:
                 with st.spinner("Yuzlar aniqlanmoqda..."):
                     try:
                         import base64
-                        import sys
-                        import os
+                        import requests
                         
-                        yangi_path = os.path.join(os.path.dirname(__file__), "yangi")
-                        if yangi_path not in sys.path:
-                            sys.path.insert(0, yangi_path)
+                        image_base64 = base64.b64encode(frame_image).decode()
                         
-                        try:
-                            import face_module as fm
-                            
-                            image_base64 = base64.b64encode(frame_image).decode()
-                            result = fm.take_attendance(image_base64)
-                            
-                            # Natijalar
-                            col1, col2, col3 = st.columns(3)
-                            col1.metric("👥 Jami", result["total"])
-                            col2.metric("✅ Borlar", result["present_count"])
-                            col3.metric("❌ Yo'qlar", result["absent_count"])
-                            
-                            st.markdown("---")
-                            
-                            c1, c2 = st.columns(2)
-                            with c1:
-                                st.markdown("### ✅ Kelganlar")
-                                if result["present"]:
-                                    for p in result["present"]:
-                                        st.write(f"✅ {p['name']}")
-                                else:
-                                    st.warning("Hech kim aniqlanmadi")
-                            
-                            with c2:
-                                st.markdown("### ❌ Kelmayganlar")
-                                if result["absent"]:
-                                    for a in result["absent"]:
-                                        st.write(f"❌ {a['name']}")
-                                else:
-                                    st.success("Hamma kelgan!")
-                            
-                            log_activity("Yo'qlama olindi", f"Borlar: {result['present_count']}, Yo'qlar: {result['absent_count']}")
-                            
-                        except ImportError:
-                            st.error("⚠️ Face recognition moduli yuklanmadi!")
-                            st.code("pip install face_recognition", language="bash")
-                            
+                        # Avval lokal serverga urinish
+                        server_urls = [
+                            "http://localhost:5000/api/attendance",  # Lokal
+                        ]
+                        
+                        result = None
+                        server_found = False
+                        
+                        for url in server_urls:
+                            try:
+                                response = requests.post(
+                                    url,
+                                    json={"frame": image_base64},
+                                    timeout=30
+                                )
+                                if response.status_code == 200:
+                                    result = response.json()
+                                    server_found = True
+                                    break
+                            except:
+                                continue
+                        
+                        if not server_found or not result:
+                            st.error("⚠️ Server ishlamayapti!")
+                            st.info("📌 Kompyuterda START_SERVER.vbs ni ishga tushiring")
+                            st.stop()
+                        
+                        if not result.get("success", False):
+                            st.error(f"❌ {result.get('message', 'Xatolik')}")
+                            st.stop()
+                        
+                        # Natijalar
+                        col1, col2, col3 = st.columns(3)
+                        col1.metric("👥 Jami", result.get("total", 0))
+                        col2.metric("✅ Borlar", result.get("present_count", 0))
+                        col3.metric("❌ Yo'qlar", result.get("absent_count", 0))
+                        
+                        st.markdown("---")
+                        
+                        c1, c2 = st.columns(2)
+                        with c1:
+                            st.markdown("### ✅ Kelganlar")
+                            if result.get("present"):
+                                for p in result["present"]:
+                                    st.write(f"✅ {p['name']}")
+                            else:
+                                st.warning("Hech kim aniqlanmadi")
+                        
+                        with c2:
+                            st.markdown("### ❌ Kelmayganlar")
+                            if result.get("absent"):
+                                for a in result["absent"]:
+                                    st.write(f"❌ {a['name']}")
+                            else:
+                                st.success("Hamma kelgan!")
+                        
+                        log_activity("Yo'qlama olindi", f"Borlar: {result.get('present_count', 0)}, Yo'qlar: {result.get('absent_count', 0)}")
+                        
                     except Exception as e:
                         st.error(f"Xatolik: {e}")
+                        st.info("📌 Server ishga tushirilganligini tekshiring")
     
     # --- YO'QLAMA TARIXI (2-tab) ---
     with yoqlama_tab2:
