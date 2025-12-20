@@ -780,6 +780,7 @@ with tab4:
         )
         
         face_image = None
+        face_detected = False
         
         if register_method == "📷 Kameradan olish":
             camera_face = st.camera_input("📷 Talaba yuzini rasmga oling", key="register_camera")
@@ -793,8 +794,55 @@ with tab4:
                 key="register_upload"
             )
             if uploaded_face:
-                st.image(uploaded_face, caption="Yuklangan rasm", width=200)
                 face_image = uploaded_face.read()
+        
+        # Yuz aniqlash va ko'rsatish
+        if face_image:
+            try:
+                import base64
+                import sys
+                import os
+                
+                yangi_path = os.path.join(os.path.dirname(__file__), "yangi")
+                if yangi_path not in sys.path:
+                    sys.path.insert(0, yangi_path)
+                
+                try:
+                    import face_module as fm
+                    
+                    # Yuz aniqlash
+                    image_base64 = base64.b64encode(face_image).decode()
+                    detection = fm.detect_face_in_image(image_base64)
+                    
+                    if detection["found"]:
+                        face_detected = True
+                        st.success(detection["message"])
+                        
+                        # Yashil ramkali rasmni ko'rsatish
+                        if detection["image_with_boxes"]:
+                            st.image(
+                                base64.b64decode(detection["image_with_boxes"]),
+                                caption="✅ Yuz aniqlandi!",
+                                width=300
+                            )
+                        else:
+                            # Oddiy rasmni ko'rsatish
+                            st.image(face_image, caption="✅ Yuz topildi!", width=200)
+                    else:
+                        face_detected = False
+                        st.error(detection["message"])
+                        st.image(face_image, caption="❌ Yuz topilmadi", width=200)
+                        
+                except ImportError:
+                    # Face module yuklanmasa, oddiy ko'rsatish
+                    st.image(face_image, caption="Yuklangan rasm", width=200)
+                    st.warning("⚠️ Yuz aniqlash moduli yuklanmadi. Lekin davom etishingiz mumkin.")
+                    face_detected = True  # Davom etish imkonini berish
+                    
+            except Exception as e:
+                st.image(face_image, caption="Yuklangan rasm", width=200)
+                st.warning(f"⚠️ Yuz tekshirib bo'lmadi: {e}")
+                face_detected = True  # Davom etish imkonini berish
         
         if st.button("✅ Ro'yxatdan O'tkazish", type="primary", disabled=face_image is None):
             if selected_student and face_image:

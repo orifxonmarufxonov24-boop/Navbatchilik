@@ -35,6 +35,124 @@ def ensure_faces_dir():
     return FACES_DIR
 
 
+def detect_face_in_image(image_source):
+    """
+    Rasmda yuz bor-yo'qligini tekshirish va joylashuvini qaytarish
+    Bank ilovasidagi kabi yuzni aniqlash uchun
+    
+    Args:
+        image_source: Rasm (base64 yoki numpy array)
+    
+    Returns:
+        dict: {
+            "found": bool,
+            "count": int,
+            "faces": [(top, right, bottom, left), ...],
+            "image_with_boxes": base64 encoded image with green boxes
+        }
+    """
+    try:
+        # Rasmni yuklash
+        if isinstance(image_source, str):
+            if image_source.startswith("data:image"):
+                base64_data = image_source.split(",")[1]
+                image = load_image_from_base64(base64_data)
+            else:
+                image = load_image_from_base64(image_source)
+        elif isinstance(image_source, np.ndarray):
+            image = image_source
+        else:
+            return {"found": False, "count": 0, "faces": [], "image_with_boxes": None, "message": "Noto'g'ri rasm formati"}
+        
+        # OpenCV orqali yuz aniqlash (tezroq)
+        try:
+            import cv2
+            
+            # RGB dan BGR ga o'tkazish (OpenCV uchun)
+            if len(image.shape) == 3 and image.shape[2] == 3:
+                image_bgr = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+            else:
+                image_bgr = image
+            
+            # Haar Cascade yoki face_recognition orqali aniqlash
+            if FACE_RECOGNITION_AVAILABLE:
+                import face_recognition
+                face_locations = face_recognition.face_locations(image)
+            else:
+                # OpenCV Haar Cascade (backup)
+                gray = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2GRAY)
+                face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+                faces_cv = face_cascade.detectMultiScale(gray, 1.1, 4)
+                # OpenCV formatini face_recognition formatiga o'tkazish
+                face_locations = [(y, x+w, y+h, x) for (x, y, w, h) in faces_cv]
+            
+            if len(face_locations) > 0:
+                # Yashil ramka chizish
+                image_with_boxes = image.copy()
+                
+                for (top, right, bottom, left) in face_locations:
+                    # Yashil ramka
+                    cv2.rectangle(image_with_boxes, (left, top), (right, bottom), (0, 255, 0), 3)
+                    # "Yuz topildi" yozuvi
+                    cv2.putText(image_with_boxes, "Yuz topildi!", (left, top - 10), 
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+                
+                # Base64 ga o'tkazish
+                image_rgb = cv2.cvtColor(image_with_boxes, cv2.COLOR_BGR2RGB) if len(image_with_boxes.shape) == 3 else image_with_boxes
+                pil_image = Image.fromarray(image_rgb.astype('uint8'))
+                buffer = io.BytesIO()
+                pil_image.save(buffer, format="JPEG")
+                image_b64 = base64.b64encode(buffer.getvalue()).decode()
+                
+                return {
+                    "found": True,
+                    "count": len(face_locations),
+                    "faces": face_locations,
+                    "image_with_boxes": image_b64,
+                    "message": f"✅ {len(face_locations)} ta yuz topildi!"
+                }
+            else:
+                return {
+                    "found": False,
+                    "count": 0,
+                    "faces": [],
+                    "image_with_boxes": None,
+                    "message": "❌ Rasmda yuz topilmadi! Iltimos, yuzingiz aniq ko'rinadigan rasm oling."
+                }
+                
+        except ImportError:
+            # OpenCV yo'q bo'lsa oddiy tekshirish
+            if FACE_RECOGNITION_AVAILABLE:
+                import face_recognition
+                face_locations = face_recognition.face_locations(image)
+                if len(face_locations) > 0:
+                    return {
+                        "found": True,
+                        "count": len(face_locations),
+                        "faces": face_locations,
+                        "image_with_boxes": None,
+                        "message": f"✅ {len(face_locations)} ta yuz topildi!"
+                    }
+            
+            return {
+                "found": False,
+                "count": 0,
+                "faces": [],
+                "image_with_boxes": None,
+                "message": "❌ Yuz aniqlab bo'lmadi"
+            }
+            
+    except Exception as e:
+        return {
+            "found": False,
+            "count": 0,
+            "faces": [],
+            "image_with_boxes": None,
+            "message": f"❌ Xatolik: {str(e)}"
+        }
+
+
+
 def load_image_from_base64(base64_string):
     """Base64 stringdan rasm yuklash"""
     image_data = base64.b64decode(base64_string)
