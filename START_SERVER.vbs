@@ -1,17 +1,29 @@
 ' Face Recognition Server - Quick Start
 ' ======================================
 ' Bu faylni ikki marta bosing va server ishga tushadi
-' Fon rejimida ishlaydi, oyna ko'rinmaydi
 
 Set WshShell = CreateObject("WScript.Shell")
 currentDir = CreateObject("Scripting.FileSystemObject").GetParentFolderName(WScript.ScriptFullName)
 serverPath = currentDir & "\yangi\face_server.py"
 
-' Serverni fon rejimida ishga tushirish
-WshShell.Run "pythonw """ & serverPath & """", 0, False
+' So'rash: ngrok ishlatishni xohlaysizmi?
+result = MsgBox("Internet orqali kirish kerakmi?" & vbCrLf & vbCrLf & _
+                "HA - Internet orqali (telefondan)" & vbCrLf & _
+                "YO'Q - Faqat lokal (bir WiFi)", _
+                vbYesNo + vbQuestion, "Server Sozlamalari")
 
-' Xabar ko'rsatish
-MsgBox "Face Recognition Server ishga tushdi!" & vbCrLf & vbCrLf & _
-       "Server manzili: http://localhost:5000" & vbCrLf & vbCrLf & _
-       "Endi telefondan yo'qlama olishingiz mumkin!", _
-       vbInformation, "Server Tayyor"
+If result = vbYes Then
+    ' ngrok bilan ishga tushirish (oyna ko'rinadi)
+    WshShell.Run "cmd /k python """ & serverPath & """ --ngrok", 1, False
+    MsgBox "Server internet rejimida ishga tushdi!" & vbCrLf & vbCrLf & _
+           "Konsol oynasida INTERNET MANZIL ko'rsatiladi." & vbCrLf & _
+           "Shu manzilni telefondan oching!", _
+           vbInformation, "Ngrok Server"
+Else
+    ' Oddiy lokal server (fon rejimida)
+    WshShell.Run "pythonw """ & serverPath & """", 0, False
+    MsgBox "Lokal server ishga tushdi!" & vbCrLf & vbCrLf & _
+           "Manzil: http://localhost:5000" & vbCrLf & vbCrLf & _
+           "Telefon bir xil WiFi da bo'lishi kerak!", _
+           vbInformation, "Lokal Server"
+End If

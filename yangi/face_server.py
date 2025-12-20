@@ -144,16 +144,41 @@ def delete_student(student_id):
 
 
 if __name__ == "__main__":
+    import sys
+    
+    # ngrok ishlatish (internet orqali kirish uchun)
+    use_ngrok = "--ngrok" in sys.argv or "-n" in sys.argv
+    
     print("=" * 50)
-    print("🚀 Face Recognition Local Server")
+    print("Face Recognition Server")
     print("=" * 50)
-    print(f"📊 Ro'yxatdan o'tgan talabalar: {len(fm.get_registered_students())}")
+    print(f"Ro'yxatdan o'tgan talabalar: {len(fm.get_registered_students())}")
     print("")
-    print("🌐 Server manzili: http://localhost:5000")
-    print("📱 Telefon ilovasi shu manzilga ulanadi")
+    
+    if use_ngrok:
+        try:
+            from pyngrok import ngrok
+            
+            # ngrok tunnel ochish
+            public_url = ngrok.connect(5000)
+            print(f"INTERNET MANZIL: {public_url}")
+            print("")
+            print("Telefondan shu manzilni oching!")
+            print("(Bu manzil har safar o'zgaradi)")
+            
+        except ImportError:
+            print("[XATOLIK] pyngrok o'rnatilmagan!")
+            print("O'rnatish: pip install pyngrok")
+            use_ngrok = False
+        except Exception as e:
+            print(f"[XATOLIK] ngrok: {e}")
+            use_ngrok = False
+    
+    print(f"Lokal manzil: http://localhost:5000")
     print("")
-    print("⚡ Serverni to'xtatish: Ctrl+C")
+    print("Serverni to'xtatish: Ctrl+C")
     print("=" * 50)
     
     # Serverni ishga tushirish
     app.run(host="0.0.0.0", port=5000, debug=False)
+
