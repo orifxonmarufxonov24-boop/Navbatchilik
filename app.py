@@ -948,11 +948,32 @@ with tab4:
                 
                 # Joriy ma'lumotlarni ko'rsatish
                 st.markdown(f"**📋 Joriy ma'lumotlar:**")
-                info_col1, info_col2, info_col3 = st.columns(3)
-                info_col1.info(f"👤 {original_row['ism familiya']}")
-                info_col2.info(f"🏠 Xona: {original_row['xona']}")
-                if 'telefon raqami' in original_row:
-                    info_col3.info(f"📱 {original_row['telefon raqami']}")
+                
+                # Joriy yuz rasmini ko'rsatish
+                import os as os_module
+                faces_dir = os_module.path.join(os_module.path.dirname(__file__), "yangi", "faces")
+                
+                # Talaba ID sini topish
+                original_df_idx = df[
+                    (df['ism familiya'] == original_row['ism familiya']) &
+                    (df['xona'].astype(str) == str(original_row['xona']))
+                ].index[0]
+                current_student_id = str(original_df_idx).zfill(3)
+                current_face_path = os_module.path.join(faces_dir, f"{current_student_id}.jpg")
+                
+                img_col, info_col = st.columns([1, 3])
+                
+                with img_col:
+                    if os_module.path.exists(current_face_path):
+                        st.image(current_face_path, caption="Joriy rasm", width=100)
+                    else:
+                        st.info("📷 Rasm yo'q")
+                
+                with info_col:
+                    st.info(f"👤 {original_row['ism familiya']}")
+                    st.info(f"🏠 Xona: {original_row['xona']}")
+                    if 'telefon raqami' in original_row:
+                        st.info(f"📱 {original_row['telefon raqami']}")
                 
                 st.markdown("---")
                 st.markdown("**✏️ Yangi ma'lumotlarni kiriting:**")
