@@ -507,8 +507,11 @@ with tab1:
                     # Telegramga xabar yuborish (agar telegram_id bo'lsa)
                     if 'telegram_id' in df.columns:
                         tg_id = df.at[idx, 'telegram_id']
+                        send_telegram_alert(f"🔍 DEBUG: {student_name} - tg_id = '{tg_id}'")
                         tg_msg = f"📋 <b>Navbatchilik</b>\n\n{msg}\n\n📅 Sana: {date_str}"
                         send_telegram_to_student(tg_id, tg_msg, student_name)
+                    else:
+                        send_telegram_alert(f"⚠️ telegram_id ustuni topilmadi! Ustunlar: {list(df.columns)}")
                     
                 
                 # ADMINGA XABAR YUBORISH
