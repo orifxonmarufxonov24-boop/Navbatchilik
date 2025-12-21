@@ -976,10 +976,21 @@ with tab4:
                     # SMS navbatga qo'shish (validatsiya bilan)
                     if add_to_sms_queue(queue_sheet, phone, xabar_matni.strip(), student_name):
                         yuborilgan += 1
+                    
+                    # Telegramga yuborish (agar telegram_id bo'lsa)
+                    if 'telegram_id' in df.columns:
+                        tg_id = df.at[idx, 'telegram_id']
+                        tg_msg = f"📨 <b>Xabar</b>\n\n{xabar_matni.strip()}"
+                        send_telegram_to_student(tg_id, tg_msg, student_name)
+                    
                     progress_bar.progress((i + 1) / len(tanlangan_talabalar))
                 
                 # Admin xabari
                 send_telegram_alert(f"📨 YANGI XABAR YUBORILDI!\n\n👥 {yuborilgan} ta talabaga\n📝 Xabar: {xabar_matni[:50]}...\n\n📲 SMS Widget tugmasini bosing!")
+                
+                # Guruhga xabar
+                group_msg = f"📨 <b>YANGI XABAR</b>\n\n👥 {yuborilgan} ta talabaga yuborildi\n📝 Xabar: {xabar_matni[:100]}{'...' if len(xabar_matni) > 100 else ''}"
+                send_to_ttj_group(group_msg)
                 
                 st.success(f"✅ Xabar {yuborilgan} ta talabaga navbatga qo'shildi!")
                 st.info("📱 Telefoningiz internetga ulanganda SMSlar avtomatik yuboriladi.")
