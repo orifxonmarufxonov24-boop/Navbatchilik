@@ -1081,8 +1081,24 @@ with tab4:
                             student_name = df.at[idx, 'ism familiya']
                             if add_to_sms_queue(queue_sheet, phone, st.session_state.shablon_xabar, student_name):
                                 sent_count += 1
+                            
+                            # Telegramga yuborish (agar telegram_id bo'lsa)
+                            if 'telegram_id' in df.columns:
+                                tg_id = df.at[idx, 'telegram_id']
+                                tg_msg = f"📨 <b>Xabar</b>\n\n{st.session_state.shablon_xabar}"
+                                send_telegram_to_student(tg_id, tg_msg, student_name)
                         
-                        send_telegram_alert(f"📨 TEZ XABAR!\\n\\n👥 {len(shablon_talabalar)} ta talabaga\\n📝 {st.session_state.shablon_xabar}\\n\\n📲 SMS Widget!")
+                        send_telegram_alert(f"📨 TEZ XABAR!\n\n👥 {len(shablon_talabalar)} ta talabaga\n📝 {st.session_state.shablon_xabar}\n\n📲 SMS Widget!")
+                        
+                        # Guruhga xabar
+                        group_msg = f"📨 <b>TEZ XABAR YUBORILDI</b>\n\n"
+                        group_msg += f"📝 <b>Xabar:</b> {st.session_state.shablon_xabar}\n\n"
+                        group_msg += f"👥 <b>Qabul qiluvchilar ({sent_count} ta):</b>\n"
+                        for student_str in shablon_talabalar[:15]:
+                            group_msg += f"  • {student_str}\n"
+                        if len(shablon_talabalar) > 15:
+                            group_msg += f"  ... va yana {len(shablon_talabalar) - 15} ta"
+                        send_to_ttj_group(group_msg)
                         
                         st.success(f"✅ {len(shablon_talabalar)} ta talabaga yuborildi!")
                         log_activity("Tez xabar", f"{len(shablon_talabalar)} talabaga: {st.session_state.shablon_xabar[:30]}...")
