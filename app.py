@@ -369,9 +369,31 @@ def get_queue_sheet():
     try:
         return client.open(GOOGLE_SHEET_NAME).worksheet("SMS_QUEUE")
     except:
-        ws = client.open(GOOGLE_SHEET_NAME).add_worksheet(title="SMS_QUEUE", rows="100", cols="4")
-        ws.append_row(["TELEFON", "XABAR", "STATUS", "VAQT"])
+        ws = client.open(GOOGLE_SHEET_NAME).add_worksheet(title="SMS_QUEUE", rows="500", cols="5")
+        ws.append_row(["TELEFON", "XABAR", "STATUS", "VAQT", "ISM"])
         return ws
+
+def validate_phone(phone):
+    """Telefon raqamini tekshirish va tozalash"""
+    if not phone:
+        return None
+    phone = str(phone).replace("+", "").replace(" ", "").replace("-", "")
+    phone = phone.replace("(", "").replace(")", "").replace(".0", "")
+    phone = ''.join(filter(str.isdigit, phone))
+    if len(phone) < 9:
+        return None
+    if len(phone) == 9:
+        phone = "998" + phone
+    return phone
+
+def add_to_sms_queue(queue_sheet, phone, message, student_name=""):
+    """SMS navbatiga xavfsiz qo'shish"""
+    clean_phone = validate_phone(phone)
+    if not clean_phone:
+        return False
+    timestamp = (datetime.now() + timedelta(hours=5)).strftime("%Y-%m-%d %H:%M:%S")
+    queue_sheet.append_row([clean_phone, message, "PENDING", timestamp, student_name])
+    return True
 
 # --- MA'LUMOTNI O'QISH ---
 try:
@@ -439,12 +461,11 @@ with tab1:
                     # Asosiy jadvalga ID yozish
                     sheet.update_cell(row_idx, date_col_idx, type_id)
                     
-                    # SMS Navbatiga yozish
+                    # SMS Navbatiga yozish (validatsiya bilan)
                     phone = df.at[idx, 'telefon raqami']
+                    student_name = df.at[idx, 'ism familiya']
                     msg = SMS_TEMPLATES[type_id]
-                    
-                    # [TELEFON, XABAR, STATUS, VAQT]
-                    queue_sheet.append_row([phone, msg, "PENDING", timestamp])
+                    add_to_sms_queue(queue_sheet, phone, msg, student_name)
                     
                     progress_bar.progress((i + 1) / len(selections))
                 
@@ -580,11 +601,10 @@ with tab2:
                     
                     # SMS Navbatiga yozish (kun bilan)
                     phone = df.at[idx, 'telefon raqami']
+                    student_name = df.at[idx, 'ism familiya']
                     joy_nomi = NARYAD_NAMES[type_id]
                     msg = f"Siz {naryad_kunlar} kunga {joy_nomi}ga naryadchisiz. Ishingizga omad!"
-                    
-                    # [TELEFON, XABAR, STATUS, VAQT]
-                    queue_sheet.append_row([phone, msg, "PENDING", timestamp])
+                    add_to_sms_queue(queue_sheet, phone, msg, student_name)
                     
                     progress_bar.progress((i + 1) / len(naryad_selections))
                 
@@ -886,10 +906,11 @@ with tab4:
                 for i, student_str in enumerate(tanlangan_talabalar):
                     idx = xabar_student_options.index(student_str)
                     phone = df.at[idx, 'telefon raqami']
+                    student_name = df.at[idx, 'ism familiya']
                     
-                    # SMS navbatga qo'shish
-                    queue_sheet.append_row([phone, xabar_matni.strip(), "PENDING", timestamp])
-                    yuborilgan += 1
+                    # SMS navbatga qo'shish (validatsiya bilan)
+                    if add_to_sms_queue(queue_sheet, phone, xabar_matni.strip(), student_name):
+                        yuborilgan += 1
                     progress_bar.progress((i + 1) / len(tanlangan_talabalar))
                 
                 # Admin xabari
@@ -965,10 +986,13 @@ with tab4:
                         queue_sheet = get_queue_sheet()
                         timestamp = (datetime.now() + timedelta(hours=5)).strftime("%Y-%m-%d %H:%M:%S")
                         
+                        sent_count = 0
                         for student_str in shablon_talabalar:
                             idx = shablon_talabalar_options.index(student_str)
                             phone = df.at[idx, 'telefon raqami']
-                            queue_sheet.append_row([phone, st.session_state.shablon_xabar, "PENDING", timestamp])
+                            student_name = df.at[idx, 'ism familiya']
+                            if add_to_sms_queue(queue_sheet, phone, st.session_state.shablon_xabar, student_name):
+                                sent_count += 1
                         
                         send_telegram_alert(f"📨 TEZ XABAR!\\n\\n👥 {len(shablon_talabalar)} ta talabaga\\n📝 {st.session_state.shablon_xabar}\\n\\n📲 SMS Widget!")
                         
