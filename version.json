@@ -1,7 +1,7 @@
 {
-    "version": "1.5.0",
-    "versionCode": 6,
-    "releaseNotes": "Yangi: Talabalarga Telegram xabar, SMS tizimi yaxshilandi, Xato tuzatishlar",
+    "version": "1.5.1",
+    "versionCode": 7,
+    "releaseNotes": "Yangi: Xabarlar guruhga yuboriladi, Telegram bildirishnomalar yaxshilandi",
     "downloadUrl": "https://github.com/orifxonmarufxonov24-boop/Navbatchilik/releases/latest/download/app-release.apk",
     "forceUpdate": false
 }
