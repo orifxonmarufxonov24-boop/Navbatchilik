@@ -162,6 +162,28 @@ def log_activity(action, details=""):
 🕐 Vaqt: {tashkent_time} (Toshkent)"""
     send_telegram_alert(msg)
 
+def send_telegram_to_student(telegram_id, message):
+    """Talabaga shaxsiy Telegram xabar yuborish"""
+    if not telegram_id:
+        return False
+    
+    # telegram_id ni tozalash
+    tg_id = str(telegram_id).replace(".0", "").strip()
+    if not tg_id or tg_id == "nan" or len(tg_id) < 5:
+        return False
+    
+    try:
+        import requests
+        url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+        response = requests.post(url, data={
+            "chat_id": tg_id,
+            "text": message,
+            "parse_mode": "HTML"
+        }, timeout=10)
+        return response.status_code == 200
+    except:
+        return False
+
 # --- KONFIGURATSIYA ---
 GOOGLE_SHEET_NAME = "Navbatchilik_Jadvali"
 
@@ -474,7 +496,12 @@ with tab1:
                     msg = SMS_TEMPLATES[type_id]
                     add_to_sms_queue(queue_sheet, phone, msg, student_name)
                     
-                    progress_bar.progress((i + 1) / len(selections))
+                    # Telegramga xabar yuborish (agar telegram_id bo'lsa)
+                    if 'telegram_id' in df.columns:
+                        tg_id = df.at[idx, 'telegram_id']
+                        tg_msg = f"📋 <b>Navbatchilik</b>\n\n{msg}\n\n📅 Sana: {date_str}"
+                        send_telegram_to_student(tg_id, tg_msg)
+                    
                 
                 # ADMINGA XABAR YUBORISH
                 send_telegram_alert("🚨 DIQQAT: Yangi navbatchilar belgilandi!\n\n📲 Iltimos, telefoningizdagi 'SMS Widget' tugmasini bosing.")
@@ -618,6 +645,12 @@ with tab2:
                     joy_nomi = NARYAD_NAMES[type_id]
                     msg = f"Siz {naryad_kunlar} kunga {joy_nomi}ga naryadchisiz. Ishingizga omad!"
                     add_to_sms_queue(queue_sheet, phone, msg, student_name)
+                    
+                    # Telegramga xabar yuborish (agar telegram_id bo'lsa)
+                    if 'telegram_id' in df.columns:
+                        tg_id = df.at[idx, 'telegram_id']
+                        tg_msg = f"🛠 <b>Naryad</b>\n\n{msg}\n\n📅 Sana: {naryad_date_str}"
+                        send_telegram_to_student(tg_id, tg_msg)
                     
                     progress_bar.progress((i + 1) / len(naryad_selections))
                 
