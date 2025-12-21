@@ -988,8 +988,14 @@ with tab4:
                 # Admin xabari
                 send_telegram_alert(f"📨 YANGI XABAR YUBORILDI!\n\n👥 {yuborilgan} ta talabaga\n📝 Xabar: {xabar_matni[:50]}...\n\n📲 SMS Widget tugmasini bosing!")
                 
-                # Guruhga xabar
-                group_msg = f"📨 <b>YANGI XABAR</b>\n\n👥 {yuborilgan} ta talabaga yuborildi\n📝 Xabar: {xabar_matni[:100]}{'...' if len(xabar_matni) > 100 else ''}"
+                # Guruhga xabar (talabalar ro'yxati bilan)
+                group_msg = f"📨 <b>YANGI XABAR YUBORILDI</b>\n\n"
+                group_msg += f"� <b>Xabar:</b> {xabar_matni.strip()}\n\n"
+                group_msg += f"�👥 <b>Qabul qiluvchilar ({yuborilgan} ta):</b>\n"
+                for student_str in tanlangan_talabalar[:15]:  # Max 15 ta ko'rsatish
+                    group_msg += f"  • {student_str}\n"
+                if len(tanlangan_talabalar) > 15:
+                    group_msg += f"  ... va yana {len(tanlangan_talabalar) - 15} ta"
                 send_to_ttj_group(group_msg)
                 
                 st.success(f"✅ Xabar {yuborilgan} ta talabaga navbatga qo'shildi!")
