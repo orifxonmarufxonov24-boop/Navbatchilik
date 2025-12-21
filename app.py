@@ -174,7 +174,7 @@ def send_telegram_to_student(telegram_id, message, student_name=""):
     
     try:
         import requests
-        url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+        url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
         response = requests.post(url, data={
             "chat_id": tg_id,
             "text": message,
