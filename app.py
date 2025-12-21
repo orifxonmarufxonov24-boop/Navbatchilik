@@ -162,7 +162,7 @@ def log_activity(action, details=""):
 🕐 Vaqt: {tashkent_time} (Toshkent)"""
     send_telegram_alert(msg)
 
-def send_telegram_to_student(telegram_id, message):
+def send_telegram_to_student(telegram_id, message, student_name=""):
     """Talabaga shaxsiy Telegram xabar yuborish"""
     if not telegram_id:
         return False
@@ -180,8 +180,16 @@ def send_telegram_to_student(telegram_id, message):
             "text": message,
             "parse_mode": "HTML"
         }, timeout=10)
-        return response.status_code == 200
-    except:
+        
+        if response.status_code == 200:
+            # Muvaffaqiyatli - adminga xabar
+            send_telegram_alert(f"✅ TG: {student_name} ({tg_id}) - xabar yuborildi")
+            return True
+        else:
+            send_telegram_alert(f"❌ TG: {student_name} ({tg_id}) - xato: {response.status_code}")
+            return False
+    except Exception as e:
+        send_telegram_alert(f"❌ TG: {student_name} ({tg_id}) - xato: {str(e)[:50]}")
         return False
 
 # --- KONFIGURATSIYA ---
@@ -500,7 +508,7 @@ with tab1:
                     if 'telegram_id' in df.columns:
                         tg_id = df.at[idx, 'telegram_id']
                         tg_msg = f"📋 <b>Navbatchilik</b>\n\n{msg}\n\n📅 Sana: {date_str}"
-                        send_telegram_to_student(tg_id, tg_msg)
+                        send_telegram_to_student(tg_id, tg_msg, student_name)
                     
                 
                 # ADMINGA XABAR YUBORISH
@@ -650,7 +658,7 @@ with tab2:
                     if 'telegram_id' in df.columns:
                         tg_id = df.at[idx, 'telegram_id']
                         tg_msg = f"🛠 <b>Naryad</b>\n\n{msg}\n\n📅 Sana: {naryad_date_str}"
-                        send_telegram_to_student(tg_id, tg_msg)
+                        send_telegram_to_student(tg_id, tg_msg, student_name)
                     
                     progress_bar.progress((i + 1) / len(naryad_selections))
                 
