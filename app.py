@@ -186,7 +186,9 @@ def send_telegram_to_student(telegram_id, message, student_name=""):
             send_telegram_alert(f"✅ TG: {student_name} ({tg_id}) - xabar yuborildi")
             return True
         else:
-            send_telegram_alert(f"❌ TG: {student_name} ({tg_id}) - xato: {response.status_code}")
+            # Xato tafsilotlari
+            error_info = response.json().get('description', 'Noma\'lum xato')
+            send_telegram_alert(f"❌ TG: {student_name} ({tg_id}) - {error_info}")
             return False
     except Exception as e:
         send_telegram_alert(f"❌ TG: {student_name} ({tg_id}) - xato: {str(e)[:50]}")
