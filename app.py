@@ -417,7 +417,13 @@ with tab1:
     st.info(f"Tanlangan sana: **{date_str}**")
 
     # Ism va Xona bo'yicha saralash (o'sish tartibida)
-    student_options = sorted(df.apply(lambda x: f"{x['ism familiya']} ({x['xona']})", axis=1).tolist())
+    # Har bir talaba uchun display string va original index mapping
+    student_display_to_idx = {}
+    for idx, row in df.iterrows():
+        display_str = f"{row['ism familiya']} ({row['xona']})"
+        student_display_to_idx[display_str] = idx
+    
+    student_options = sorted(student_display_to_idx.keys())
 
     with st.form("duty_form"):
         c1, c2 = st.columns(2)
@@ -455,7 +461,8 @@ with tab1:
                 progress_bar = st.progress(0)
                 
                 for i, (student_str, type_id) in enumerate(selections):
-                    idx = student_options.index(student_str)
+                    # To'g'ri indeksni olish (mapping orqali)
+                    idx = student_display_to_idx[student_str]
                     row_idx = idx + 2
                     
                     # Asosiy jadvalga ID yozish
@@ -531,8 +538,13 @@ with tab2:
         naryad_date_str = naryad_date.strftime("%Y.%m.%d")
     st.info(f"Tanlangan sana: **{naryad_date_str}**")
 
-    # Ism va Xona bo'yicha saralash
-    naryad_student_options = sorted(df.apply(lambda x: f"{x['ism familiya']} ({x['xona']})", axis=1).tolist())
+    # Ism va Xona bo'yicha saralash (mapping bilan)
+    naryad_display_to_idx = {}
+    for idx, row in df.iterrows():
+        display_str = f"{row['ism familiya']} ({row['xona']})"
+        naryad_display_to_idx[display_str] = idx
+    
+    naryad_student_options = sorted(naryad_display_to_idx.keys())
 
     with st.form("naryad_form"):
         # Kun kiritish
@@ -593,7 +605,8 @@ with tab2:
                 progress_bar = st.progress(0)
                 
                 for i, (student_str, type_id) in enumerate(naryad_selections):
-                    idx = naryad_student_options.index(student_str)
+                    # To'g'ri indeksni olish (mapping orqali)
+                    idx = naryad_display_to_idx[student_str]
                     row_idx = idx + 2
                     
                     # Asosiy jadvalga ID yozish
@@ -852,8 +865,13 @@ with tab4:
     st.subheader("📨 Xabarlar - Tanlangan Talabalarga SMS Yuborish")
     st.info("📌 Xabar yozing va qaysi talabalarga yuborishni tanlang. SMS navbatga qo'shiladi.")
     
-    # Talabalar ro'yxati
-    xabar_student_options = sorted(df.apply(lambda x: f"{x['ism familiya']} ({x['xona']})", axis=1).tolist())
+    # Talabalar ro'yxati (mapping bilan)
+    xabar_display_to_idx = {}
+    for idx, row in df.iterrows():
+        display_str = f"{row['ism familiya']} ({row['xona']})"
+        xabar_display_to_idx[display_str] = idx
+    
+    xabar_student_options = sorted(xabar_display_to_idx.keys())
     
     with st.form("xabar_form"):
         # Xabar matni
@@ -904,7 +922,8 @@ with tab4:
                 yuborilgan = 0
                 
                 for i, student_str in enumerate(tanlangan_talabalar):
-                    idx = xabar_student_options.index(student_str)
+                    # To'g'ri indeksni olish (mapping orqali)
+                    idx = xabar_display_to_idx[student_str]
                     phone = df.at[idx, 'telefon raqami']
                     student_name = df.at[idx, 'ism familiya']
                     
@@ -957,7 +976,12 @@ with tab4:
         st.markdown("---")
         st.success(f"📝 Tanlangan xabar: **{st.session_state.shablon_xabar}**")
         
-        shablon_talabalar_options = sorted(df.apply(lambda x: f"{x['ism familiya']} ({x['xona']})", axis=1).tolist())
+        shablon_display_to_idx = {}
+        for idx, row in df.iterrows():
+            display_str = f"{row['ism familiya']} ({row['xona']})"
+            shablon_display_to_idx[display_str] = idx
+        
+        shablon_talabalar_options = sorted(shablon_display_to_idx.keys())
         
         shablon_tanlash = st.radio(
             "Kimga yuborish?",
@@ -988,7 +1012,8 @@ with tab4:
                         
                         sent_count = 0
                         for student_str in shablon_talabalar:
-                            idx = shablon_talabalar_options.index(student_str)
+                            # To'g'ri indeksni olish (mapping orqali)
+                            idx = shablon_display_to_idx[student_str]
                             phone = df.at[idx, 'telefon raqami']
                             student_name = df.at[idx, 'ism familiya']
                             if add_to_sms_queue(queue_sheet, phone, st.session_state.shablon_xabar, student_name):
