@@ -1,7 +1,7 @@
 {
-    "version": "1.5.2",
-    "versionCode": 8,
-    "releaseNotes": "Yangi: Tez shablonlar guruhga yuboriladi, Xabarlar yaxshilandi",
+    "version": "1.6.0",
+    "versionCode": 9,
+    "releaseNotes": "Yangi: 3-etaj qo'shildi! 2 ta parol, 2 ta etaj, Telegram xabar alohida",
     "downloadUrl": "https://github.com/orifxonmarufxonov24-boop/Navbatchilik/releases/latest/download/app-release.apk",
     "forceUpdate": false
 }
