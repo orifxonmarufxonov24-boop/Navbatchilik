@@ -563,10 +563,15 @@ with tab1:
     try:
         qs = get_queue_sheet()
         q_data = qs.get_all_records()
-        # Tarixni teskarisiga aylantiramiz (eng yangisi tepada)
-        st.dataframe(pd.DataFrame(q_data)[::-1], use_container_width=True)
-    except:
-        st.info("Navbat bo'sh")
+        if q_data and len(q_data) > 0:
+            # Tarixni teskarisiga aylantiramiz (eng yangisi tepada)
+            queue_df = pd.DataFrame(q_data)[::-1]
+            st.dataframe(queue_df, use_container_width=True, height=300)
+            st.caption(f"📊 Jami: {len(q_data)} ta xabar")
+        else:
+            st.info("📭 SMS navbati bo'sh - hali xabar yuborilmagan")
+    except Exception as e:
+        st.warning(f"⚠️ SMS navbatini yuklashda xatolik: {e}")
 
 with tab2:
     st.subheader("🛠️ Naryad Taqsimoti")
