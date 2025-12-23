@@ -322,6 +322,9 @@ def check_password():
     if "auth" in st.query_params:
         if st.query_params["auth"] == "ok":
             st.session_state["password_correct"] = True
+            # Floor ni ham tiklash
+            if "floor" in st.query_params:
+                st.session_state["current_floor"] = st.query_params["floor"]
             return True
 
     if st.session_state.get("password_correct", False):
@@ -411,18 +414,20 @@ def check_password():
                 # 4-etaj paroli
                 if password_clean == st.secrets["password"]:
                     reset_login_attempts()
-                    send_successful_login_alert()
                     st.session_state["password_correct"] = True
                     st.session_state["current_floor"] = "4-etaj"
                     st.query_params["auth"] = "ok"
+                    st.query_params["floor"] = "4-etaj"
+                    send_successful_login_alert()
                     st.rerun()
                 # 3-etaj paroli
                 elif password_clean == st.secrets.get("password_3etaj", "3etaj"):
                     reset_login_attempts()
-                    send_successful_login_alert()
                     st.session_state["password_correct"] = True
                     st.session_state["current_floor"] = "3-etaj"
                     st.query_params["auth"] = "ok"
+                    st.query_params["floor"] = "3-etaj"
+                    send_successful_login_alert()
                     st.rerun()
                 else:
                     record_failed_login()
