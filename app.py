@@ -21,7 +21,29 @@ import requests
 # --- TELEGRAM SOZLAMALARI ---
 TELEGRAM_TOKEN = "8259734572:AAGeJLKmmruLByDjx81gdi1VcjNt3ZnX894"
 ADMIN_CHAT_ID = "7693191223"
-TTJ_GROUP_ID = "-1002435484678"  # 4-etaj talabalar
+
+# Etajlar konfiguratsiyasi
+FLOOR_CONFIG = {
+    "4-etaj": {
+        "name": "4-etaj (O'g'il bolalar)",
+        "sheet_name": "Navbatchilik_Jadvali",
+        "telegram_group": "-1002435484678"
+    },
+    "3-etaj": {
+        "name": "3-etaj (Qizlar)",
+        "sheet_name": "TTJ 3-etaj Navbatchilik",
+        "telegram_group": "-1002623014807"
+    }
+}
+
+# Joriy etaj (session_state da saqlanadi)
+def get_current_floor():
+    return st.session_state.get("current_floor", "4-etaj")
+
+def get_current_config():
+    return FLOOR_CONFIG.get(get_current_floor(), FLOOR_CONFIG["4-etaj"])
+
+TTJ_GROUP_ID = "-1002435484678"  # Default (4-etaj)
 
 def send_telegram_alert(message):
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
@@ -31,11 +53,15 @@ def send_telegram_alert(message):
         pass
 
 def send_to_ttj_group(message):
-    """TTJ guruhiga xabar yuborish"""
+    """TTJ guruhiga xabar yuborish (joriy etajga qarab)"""
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
     try:
+        # Joriy etajning Telegram guruhini olish
+        config = get_current_config()
+        group_id = config.get("telegram_group", TTJ_GROUP_ID)
+        
         requests.post(url, data={
-            "chat_id": TTJ_GROUP_ID, 
+            "chat_id": group_id, 
             "text": message, 
             "parse_mode": "HTML"
         }, timeout=5)
@@ -374,11 +400,23 @@ def check_password():
             submit_button = st.form_submit_button("🚀 Kirish", use_container_width=True)
 
             if submit_button:
-                # Parolni tekshirish (bo'sh joylarni olib tashlab)
-                if password.strip() == st.secrets["password"]:
+                # Parollarni tekshirish
+                password_clean = password.strip()
+                
+                # 4-etaj paroli
+                if password_clean == st.secrets["password"]:
                     reset_login_attempts()
                     send_successful_login_alert()
                     st.session_state["password_correct"] = True
+                    st.session_state["current_floor"] = "4-etaj"
+                    st.query_params["auth"] = "ok"
+                    st.rerun()
+                # 3-etaj paroli
+                elif password_clean == st.secrets.get("password_3etaj", "3etaj"):
+                    reset_login_attempts()
+                    send_successful_login_alert()
+                    st.session_state["password_correct"] = True
+                    st.session_state["current_floor"] = "3-etaj"
                     st.query_params["auth"] = "ok"
                     st.rerun()
                 else:
@@ -393,15 +431,22 @@ def check_password():
 if not check_password():
     st.stop()
 
+def get_sheet_name():
+    """Joriy etajning Google Sheet nomini olish"""
+    config = get_current_config()
+    return config.get("sheet_name", GOOGLE_SHEET_NAME)
+
 def get_main_sheet():
-    return get_client().open(GOOGLE_SHEET_NAME).sheet1
+    sheet_name = get_sheet_name()
+    return get_client().open(sheet_name).sheet1
 
 def get_queue_sheet():
     client = get_client()
+    sheet_name = get_sheet_name()
     try:
-        return client.open(GOOGLE_SHEET_NAME).worksheet("SMS_QUEUE")
+        return client.open(sheet_name).worksheet("SMS_QUEUE")
     except:
-        ws = client.open(GOOGLE_SHEET_NAME).add_worksheet(title="SMS_QUEUE", rows="500", cols="5")
+        ws = client.open(sheet_name).add_worksheet(title="SMS_QUEUE", rows="500", cols="5")
         ws.append_row(["TELEFON", "XABAR", "STATUS", "VAQT", "ISM"])
         return ws
 
@@ -436,6 +481,17 @@ try:
 except Exception as e:
     st.error(f"Google Sheetga ulanishda xatolik: {e}")
     st.stop()
+
+# --- JORIY ETAJ KO'RSATISH ---
+current_config = get_current_config()
+floor_name = current_config.get("name", "4-etaj")
+st.markdown(f"""
+<div style="background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); 
+            padding: 10px 20px; border-radius: 10px; margin-bottom: 15px; 
+            text-align: center; color: white; font-weight: bold;">
+    🏢 {floor_name}
+</div>
+""", unsafe_allow_html=True)
 
 # --- TABLAR ---
 tab1, tab2, tab3, tab4 = st.tabs(["📝 Navbatchilik", "🛠️ Naryad", "📊 Statistika", "📨 Xabarlar"])
