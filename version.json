@@ -1,7 +1,7 @@
 {
-    "version": "1.6.0",
-    "versionCode": 9,
-    "releaseNotes": "Yangi: 3-etaj qo'shildi! 2 ta parol, 2 ta etaj, Telegram xabar alohida",
+    "version": "1.6.1",
+    "versionCode": 10,
+    "releaseNotes": "Tuzatish: 3-etaj sessiyasi saqlanadi, yangilanganda etaj o'zgarmaydi",
     "downloadUrl": "https://github.com/orifxonmarufxonov24-boop/Navbatchilik/releases/latest/download/app-release.apk",
     "forceUpdate": false
 }
