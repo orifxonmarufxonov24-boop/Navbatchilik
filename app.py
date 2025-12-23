@@ -170,8 +170,13 @@ def send_successful_login_alert():
     device = get_device_type()
     tashkent_time = get_tashkent_time()
     
+    # Joriy etaj nomini olish
+    floor = st.session_state.get("current_floor", "4-etaj")
+    floor_name = FLOOR_CONFIG.get(floor, {}).get("name", floor)
+    
     msg = f"""✅ TIZIMGA KIRISH
 
+🏢 Etaj: {floor_name}
 🕐 Vaqt: {tashkent_time} (Toshkent)
 {device}
 
