@@ -1,7 +1,7 @@
 {
-    "version": "1.6.1",
-    "versionCode": 10,
-    "releaseNotes": "Tuzatish: 3-etaj sessiyasi saqlanadi, yangilanganda etaj o'zgarmaydi",
+    "version": "1.6.2",
+    "versionCode": 11,
+    "releaseNotes": "Yangi: 3-etaj qizlar Telegram guruhi ulandi",
     "downloadUrl": "https://github.com/orifxonmarufxonov24-boop/Navbatchilik/releases/latest/download/app-release.apk",
     "forceUpdate": false
 }
