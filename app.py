@@ -446,12 +446,14 @@ def get_main_sheet():
     return get_client().open(sheet_name).sheet1
 
 def get_queue_sheet():
+    """SMS navbati - har doim 4-etaj Sheet'da saqlanadi (agent bitta joyni ko'rsin)"""
     client = get_client()
-    sheet_name = get_sheet_name()
+    # SMS navbati har doim asosiy Sheet'da (4-etaj)
+    main_sheet_name = FLOOR_CONFIG["4-etaj"]["sheet_name"]
     try:
-        return client.open(sheet_name).worksheet("SMS_QUEUE")
+        return client.open(main_sheet_name).worksheet("SMS_QUEUE")
     except:
-        ws = client.open(sheet_name).add_worksheet(title="SMS_QUEUE", rows="500", cols="5")
+        ws = client.open(main_sheet_name).add_worksheet(title="SMS_QUEUE", rows="500", cols="5")
         ws.append_row(["TELEFON", "XABAR", "STATUS", "VAQT", "ISM"])
         return ws
 
