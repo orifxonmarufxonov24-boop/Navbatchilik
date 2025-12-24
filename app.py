@@ -458,8 +458,8 @@ def get_queue_sheet():
     try:
         return client.open(main_sheet_name).worksheet("SMS_QUEUE")
     except:
-        ws = client.open(main_sheet_name).add_worksheet(title="SMS_QUEUE", rows="500", cols="5")
-        ws.append_row(["TELEFON", "XABAR", "STATUS", "VAQT", "ISM"])
+        ws = client.open(main_sheet_name).add_worksheet(title="SMS_QUEUE", rows="500", cols="6")
+        ws.append_row(["TELEFON", "XABAR", "STATUS", "VAQT", "ISM", "ETAJ"])
         return ws
 
 def validate_phone(phone):
@@ -481,7 +481,9 @@ def add_to_sms_queue(queue_sheet, phone, message, student_name=""):
     if not clean_phone:
         return False
     timestamp = (datetime.now() + timedelta(hours=5)).strftime("%Y-%m-%d %H:%M:%S")
-    queue_sheet.append_row([clean_phone, message, "PENDING", timestamp, student_name])
+    # Joriy etajni ham saqlash
+    current_floor = get_current_floor()
+    queue_sheet.append_row([clean_phone, message, "PENDING", timestamp, student_name, current_floor])
     return True
 
 # --- MA'LUMOTNI O'QISH ---
@@ -627,15 +629,28 @@ with tab1:
     st.subheader("📋 Asosiy Jadval")
     st.dataframe(df, use_container_width=True)
 
-    st.subheader("📨 SMS Navbati Statusi (Barcha Tarix)")
+    st.subheader(f"📨 SMS Navbati Statusi ({floor_name})")
     try:
         qs = get_queue_sheet()
         q_data = qs.get_all_records()
         if q_data and len(q_data) > 0:
-            # Tarixni teskarisiga aylantiramiz (eng yangisi tepada)
-            queue_df = pd.DataFrame(q_data)[::-1]
-            st.dataframe(queue_df, use_container_width=True, height=300)
-            st.caption(f"📊 Jami: {len(q_data)} ta xabar")
+            queue_df = pd.DataFrame(q_data)
+            
+            # Joriy etaj bo'yicha filtr
+            current_floor = get_current_floor()
+            if "ETAJ" in queue_df.columns:
+                queue_df = queue_df[queue_df["ETAJ"] == current_floor]
+            
+            if len(queue_df) > 0:
+                # Tarixni teskarisiga aylantiramiz (eng yangisi tepada)
+                queue_df = queue_df[::-1]
+                # ETAJ ustunini yashirish
+                if "ETAJ" in queue_df.columns:
+                    queue_df = queue_df.drop(columns=["ETAJ"])
+                st.dataframe(queue_df, use_container_width=True, height=300)
+                st.caption(f"📊 Jami: {len(queue_df)} ta xabar")
+            else:
+                st.info(f"📭 {floor_name} uchun SMS navbati bo'sh")
         else:
             st.info("📭 SMS navbati bo'sh - hali xabar yuborilmagan")
     except Exception as e:
