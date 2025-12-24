@@ -632,14 +632,27 @@ with tab1:
     st.subheader(f"📨 SMS Navbati Statusi ({floor_name})")
     try:
         qs = get_queue_sheet()
-        q_data = qs.get_all_records()
+        # Ustun nomlarini belgilash
+        expected_headers = ["TELEFON", "XABAR", "STATUS", "VAQT", "ISM", "ETAJ"]
+        try:
+            q_data = qs.get_all_records(expected_headers=expected_headers)
+        except:
+            # Eski format bilan sinab ko'rish
+            q_data = qs.get_all_values()
+            if len(q_data) > 1:
+                headers = q_data[0] if q_data[0][0] else expected_headers
+                q_data = [dict(zip(expected_headers, row)) for row in q_data[1:]]
+            else:
+                q_data = []
+        
         if q_data and len(q_data) > 0:
             queue_df = pd.DataFrame(q_data)
             
             # Joriy etaj bo'yicha filtr
             current_floor = get_current_floor()
             if "ETAJ" in queue_df.columns:
-                queue_df = queue_df[queue_df["ETAJ"] == current_floor]
+                # Bo'sh bo'lmagan ETAJ larni filtr qilish
+                queue_df = queue_df[queue_df["ETAJ"].astype(str).str.strip() == current_floor]
             
             if len(queue_df) > 0:
                 # Tarixni teskarisiga aylantiramiz (eng yangisi tepada)
