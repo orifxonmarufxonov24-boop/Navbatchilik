@@ -17,6 +17,8 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import os
 import requests
+import plotly.express as px
+import plotly.graph_objects as go
 
 # --- TELEGRAM SOZLAMALARI ---
 TELEGRAM_TOKEN = "8259734572:AAGeJLKmmruLByDjx81gdi1VcjNt3ZnX894"
@@ -268,32 +270,375 @@ NARYAD_NAMES = {
     24: "Kichik Dush"
 }
 
-st.set_page_config(page_title="Navbatchilik Taqsimoti (Online)", layout="wide")
-st.title("📅 Yotoqxona Navbatchilik Taqsimoti (Google Sheets + Bot)")
 
-# Tugmalarni yashil qilish uchun CSS
+st.set_page_config(
+    page_title="Navbatchilik Tizimi", 
+    page_icon="🏢",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
+
+# ============================================================================
+# ZAMONAVIY DIZAYN - Glassmorphism + 3D Tugmalar
+# ============================================================================
 st.markdown("""
 <style>
-    /* Primary tugmalarni yashil qilish */
-    .stButton > button[kind="primary"],
-    button[data-testid="baseButton-primary"] {
-        background-color: #28a745 !important;
-        border-color: #28a745 !important;
+    /* ===== ASOSIY RANGLAR ===== */
+    :root {
+        --primary: #00D4AA;
+        --primary-dark: #00B894;
+        --accent: #00CEC9;
+        --bg-dark: #0a0a0a;
+        --bg-card: rgba(17, 17, 17, 0.8);
+        --glass: rgba(255, 255, 255, 0.05);
+        --glass-border: rgba(0, 212, 170, 0.3);
+        --text: #ffffff;
+        --text-muted: #888888;
     }
-    .stButton > button[kind="primary"]:hover,
-    button[data-testid="baseButton-primary"]:hover {
-        background-color: #218838 !important;
-        border-color: #1e7e34 !important;
+    
+    /* ===== UMUMIY STILLAR ===== */
+    .stApp {
+        background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #0a0a0a 100%);
     }
-    /* Form submit tugmalari */
+    
+    /* ===== GLASSMORPHISM KARTALAR ===== */
+    .glass-card {
+        background: var(--glass);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: 20px;
+        padding: 25px;
+        margin: 10px 0;
+        box-shadow: 0 8px 32px rgba(0, 212, 170, 0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .glass-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(0, 212, 170, 0.2);
+        border-color: var(--primary);
+    }
+    
+    /* ===== 3D TUGMALAR ===== */
+    .stButton > button {
+        background: linear-gradient(145deg, #00D4AA, #00B894) !important;
+        border: none !important;
+        border-radius: 12px !important;
+        padding: 12px 30px !important;
+        color: #0a0a0a !important;
+        font-weight: 700 !important;
+        font-size: 15px !important;
+        box-shadow: 
+            0 6px 20px rgba(0, 212, 170, 0.4),
+            0 3px 6px rgba(0, 0, 0, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+        transition: all 0.2s ease !important;
+        text-transform: uppercase !important;
+        letter-spacing: 1px !important;
+    }
+    
+    .stButton > button:hover {
+        transform: translateY(-3px) !important;
+        box-shadow: 
+            0 10px 30px rgba(0, 212, 170, 0.5),
+            0 5px 10px rgba(0, 0, 0, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+    }
+    
+    .stButton > button:active {
+        transform: translateY(1px) !important;
+        box-shadow: 
+            0 2px 10px rgba(0, 212, 170, 0.3),
+            inset 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+    }
+    
+    /* ===== FORM SUBMIT TUGMALARI ===== */
     .stFormSubmitButton > button {
-        background-color: #28a745 !important;
-        border-color: #28a745 !important;
-        color: white !important;
+        background: linear-gradient(145deg, #00D4AA, #00B894) !important;
+        border: none !important;
+        border-radius: 12px !important;
+        color: #0a0a0a !important;
+        font-weight: 700 !important;
+        box-shadow: 
+            0 6px 20px rgba(0, 212, 170, 0.4),
+            0 3px 6px rgba(0, 0, 0, 0.3) !important;
+        transition: all 0.2s ease !important;
     }
+    
     .stFormSubmitButton > button:hover {
-        background-color: #218838 !important;
+        transform: translateY(-3px) !important;
+        box-shadow: 0 10px 30px rgba(0, 212, 170, 0.5) !important;
     }
+    
+    /* ===== TABLAR ===== */
+    .stTabs [data-baseweb="tab-list"] {
+        background: var(--glass);
+        border-radius: 15px;
+        padding: 5px;
+        gap: 5px;
+        border: 1px solid var(--glass-border);
+    }
+    
+    .stTabs [data-baseweb="tab"] {
+        border-radius: 10px;
+        color: var(--text-muted);
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .stTabs [aria-selected="true"] {
+        background: linear-gradient(145deg, #00D4AA, #00B894) !important;
+        color: #0a0a0a !important;
+    }
+    
+    /* ===== INPUT MAYDONLARI ===== */
+    .stTextInput > div > div > input,
+    .stSelectbox > div > div,
+    .stMultiSelect > div > div {
+        background: var(--glass) !important;
+        border: 1px solid var(--glass-border) !important;
+        border-radius: 10px !important;
+        color: var(--text) !important;
+        transition: all 0.3s ease !important;
+    }
+    
+    .stTextInput > div > div > input:focus {
+        border-color: var(--primary) !important;
+        box-shadow: 0 0 20px rgba(0, 212, 170, 0.3) !important;
+    }
+    
+    /* ===== JADVALLAR ===== */
+    .stDataFrame {
+        background: var(--glass) !important;
+        border-radius: 15px !important;
+        border: 1px solid var(--glass-border) !important;
+        overflow: hidden;
+    }
+    
+    /* ===== METRIKALAR ===== */
+    [data-testid="stMetricValue"] {
+        font-size: 2.5rem !important;
+        font-weight: 800 !important;
+        background: linear-gradient(145deg, #00D4AA, #00CEC9);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    [data-testid="stMetricLabel"] {
+        color: var(--text-muted) !important;
+        font-weight: 500 !important;
+    }
+    
+    /* ===== SARLAVHALAR ===== */
+    h1, h2, h3 {
+        background: linear-gradient(145deg, #ffffff, #00D4AA);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        font-weight: 800 !important;
+    }
+    
+    /* ===== SIDEBAR ===== */
+    [data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #0a0a0a 0%, #1a1a2e 100%) !important;
+        border-right: 1px solid var(--glass-border) !important;
+    }
+    
+    /* ===== EXPANDER ===== */
+    .streamlit-expanderHeader {
+        background: var(--glass) !important;
+        border: 1px solid var(--glass-border) !important;
+        border-radius: 10px !important;
+    }
+    
+    /* ===== INFO/WARNING/ERROR ===== */
+    .stAlert {
+        background: var(--glass) !important;
+        border: 1px solid var(--glass-border) !important;
+        border-radius: 10px !important;
+    }
+    
+    /* ===== GLOW EFFEKT ===== */
+    .glow-text {
+        text-shadow: 0 0 20px rgba(0, 212, 170, 0.5);
+    }
+    
+    /* ===== ANIMATSIYALAR ===== */
+    @keyframes pulse {
+        0%, 100% { box-shadow: 0 0 20px rgba(0, 212, 170, 0.3); }
+        50% { box-shadow: 0 0 40px rgba(0, 212, 170, 0.6); }
+    }
+    
+    .pulse-glow {
+        animation: pulse 2s infinite;
+    }
+    
+    /* ===== MICRO-ANIMATSIYALAR ===== */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes slideIn {
+        from { opacity: 0; transform: translateX(-30px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+    
+    @keyframes scaleIn {
+        from { opacity: 0; transform: scale(0.9); }
+        to { opacity: 1; transform: scale(1); }
+    }
+    
+    @keyframes shimmer {
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+    }
+    
+    @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+    }
+    
+    /* Animatsiya klasslari */
+    .animate-fade { animation: fadeIn 0.5s ease-out; }
+    .animate-slide { animation: slideIn 0.4s ease-out; }
+    .animate-scale { animation: scaleIn 0.3s ease-out; }
+    .animate-float { animation: float 3s ease-in-out infinite; }
+    
+    /* Hover effektlari */
+    .hover-lift {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .hover-lift:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 20px 40px rgba(0, 212, 170, 0.3);
+    }
+    
+    /* Click effekti */
+    .click-effect:active {
+        transform: scale(0.95);
+        transition: transform 0.1s;
+    }
+    
+    /* ===== GLASSMORPHISM YAXSHILANGAN ===== */
+    .glass-premium {
+        background: linear-gradient(135deg, 
+            rgba(255, 255, 255, 0.1) 0%, 
+            rgba(255, 255, 255, 0.05) 50%,
+            rgba(0, 212, 170, 0.05) 100%);
+        backdrop-filter: blur(25px) saturate(180%);
+        -webkit-backdrop-filter: blur(25px) saturate(180%);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 24px;
+        box-shadow: 
+            0 8px 32px rgba(0, 0, 0, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1),
+            0 0 0 1px rgba(0, 212, 170, 0.1);
+    }
+    
+    /* ===== ZEBRA STRIPING JADVALLAR ===== */
+    [data-testid="stDataFrame"] table tbody tr:nth-child(odd) {
+        background: rgba(0, 212, 170, 0.05) !important;
+    }
+    
+    [data-testid="stDataFrame"] table tbody tr:nth-child(even) {
+        background: rgba(0, 0, 0, 0.2) !important;
+    }
+    
+    [data-testid="stDataFrame"] table tbody tr:hover {
+        background: rgba(0, 212, 170, 0.15) !important;
+        transition: background 0.2s ease;
+    }
+    
+    [data-testid="stDataFrame"] table thead tr {
+        background: linear-gradient(145deg, rgba(0, 212, 170, 0.2), rgba(0, 206, 201, 0.1)) !important;
+    }
+    
+    [data-testid="stDataFrame"] table th {
+        color: #00D4AA !important;
+        font-weight: 700 !important;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid rgba(0, 212, 170, 0.3) !important;
+    }
+    
+    /* ===== SCROLL BAR ===== */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+        background: var(--bg-dark);
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: var(--primary);
+        border-radius: 10px;
+    }
+    
+    /* ===== 📱 MOBIL RESPONSIVE ===== */
+    @media (max-width: 768px) {
+        /* Tugmalar kichikroq */
+        .stButton > button {
+            padding: 10px 15px !important;
+            font-size: 12px !important;
+            letter-spacing: 0.5px !important;
+        }
+        
+        /* Sarlavhalar kichikroq */
+        h1 { font-size: 1.5rem !important; }
+        h2 { font-size: 1.2rem !important; }
+        h3 { font-size: 1rem !important; }
+        
+        /* Metrikalar kichikroq */
+        [data-testid="stMetricValue"] {
+            font-size: 1.8rem !important;
+        }
+        
+        /* Kolonlar vertikal */
+        [data-testid="column"] {
+            width: 100% !important;
+            flex: 1 1 100% !important;
+        }
+        
+        /* Padding kamroq */
+        .block-container {
+            padding: 1rem !important;
+        }
+        
+        /* Kartalar kichikroq */
+        .glass-card, .glass-premium {
+            padding: 15px !important;
+            border-radius: 15px !important;
+        }
+        
+        /* Form elementlari */
+        .stTextInput > div > div > input {
+            font-size: 16px !important; /* iOS zoom oldini olish */
+        }
+    }
+    
+    @media (max-width: 480px) {
+        /* Juda kichik ekranlar */
+        .stButton > button {
+            padding: 8px 12px !important;
+            font-size: 11px !important;
+        }
+        
+        h1 { font-size: 1.2rem !important; }
+        
+        [data-testid="stMetricValue"] {
+            font-size: 1.5rem !important;
+        }
+    }
+    
+    /* ===== HIDE STREAMLIT BRANDING ===== */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
 
@@ -385,56 +730,79 @@ def check_password():
         #MainMenu {{visibility: hidden;}}
         footer {{visibility: hidden;}}
         header {{visibility: hidden;}}
+        
+        /* Tepadagi ortiqcha qora qutini yashirish */
+        [data-testid="stHeader"] {{
+            display: none !important;
+        }}
+        
+        /* Bo'sh block containerlarni yashirish */
+        .block-container:empty {{
+            display: none !important;
+        }}
+        
+        /* Sidebar yashirish */
+        section[data-testid="stSidebar"] {{
+            display: none !important;
+        }}
+        
+        /* Birinchi bo'sh elementni yashirish */
+        .main .block-container > div:first-child:empty {{
+            display: none !important;
+        }}
+        
+        /* Streamlit input wrapper */
+        .stTextInput > div:first-child {{
+            background: transparent !important;
     </style>
     """, unsafe_allow_html=True)
     
-    # Markazlashtirilgan login box
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        st.markdown('<div class="login-box">', unsafe_allow_html=True)
-        st.markdown('<p class="login-title">🔒 Tizimga kirish</p>', unsafe_allow_html=True)
-        st.markdown('<p class="login-subtitle">TTJ Yotoqxona Navbatchilik Tizimi</p>', unsafe_allow_html=True)
-        
-        # Qolgan urinishlar haqida ogohlantirish
-        state = get_security_state()
-        if state.login_attempts > 0:
-            remaining_attempts = MAX_LOGIN_ATTEMPTS - state.login_attempts
-            if remaining_attempts <= 3:
-                st.warning(f"⚠️ Qolgan urinishlar: {remaining_attempts}")
-        
-        # Form (Enter bilan ishlaydi)
-        with st.form("login_form"):
-            password = st.text_input("Parolni kiriting", type="password", placeholder="Parolni kiriting va Enter bosing...", label_visibility="collapsed")
-            submit_button = st.form_submit_button("🚀 Kirish", use_container_width=True)
+    # Login sarlavhasi (markazda)
+    st.markdown("""
+    <div style="text-align: center; margin-top: 15vh;">
+        <p style="color: #4FC3F7; font-size: 32px; margin-bottom: 10px;">🔒 Tizimga kirish</p>
+        <p style="color: #aaa; font-style: italic; margin-bottom: 30px;">TTJ Yotoqxona Navbatchilik Tizimi</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Qolgan urinishlar haqida ogohlantirish
+    state = get_security_state()
+    if state.login_attempts > 0:
+        remaining_attempts = MAX_LOGIN_ATTEMPTS - state.login_attempts
+        if remaining_attempts <= 3:
+            st.warning(f"⚠️ Qolgan urinishlar: {remaining_attempts}")
+    
+    # Form (Enter bilan ishlaydi)
+    with st.form("login_form"):
+        password = st.text_input("Parolni kiriting", type="password", placeholder="Parolni kiriting va Enter bosing...", label_visibility="collapsed")
+        submit_button = st.form_submit_button("🚀 Kirish", use_container_width=True)
 
-            if submit_button:
-                # Parollarni tekshirish
-                password_clean = password.strip()
-                
-                # 4-etaj paroli
-                if password_clean == st.secrets["password"]:
-                    reset_login_attempts()
-                    st.session_state["password_correct"] = True
-                    st.session_state["current_floor"] = "4-etaj"
-                    st.query_params["auth"] = "ok"
-                    st.query_params["floor"] = "4-etaj"
-                    send_successful_login_alert()
-                    st.rerun()
-                # 3-etaj paroli
-                elif password_clean == st.secrets.get("password_3etaj", "3etaj"):
-                    reset_login_attempts()
-                    st.session_state["password_correct"] = True
-                    st.session_state["current_floor"] = "3-etaj"
-                    st.query_params["auth"] = "ok"
-                    st.query_params["floor"] = "3-etaj"
-                    send_successful_login_alert()
-                    st.rerun()
-                else:
-                    record_failed_login()
-                    st.error("😕 Parol xato! Qaytadan urinib ko'ring.")
-                    st.rerun()
-        
-        st.markdown('</div>', unsafe_allow_html=True)
+        if submit_button:
+            # Parollarni tekshirish
+            password_clean = password.strip()
+            
+            # 4-etaj paroli
+            if password_clean == st.secrets["password"]:
+                reset_login_attempts()
+                st.session_state["password_correct"] = True
+                st.session_state["current_floor"] = "4-etaj"
+                st.query_params["auth"] = "ok"
+                st.query_params["floor"] = "4-etaj"
+                send_successful_login_alert()
+                st.rerun()
+            # 3-etaj paroli
+            elif password_clean == st.secrets.get("password_3etaj", "3etaj"):
+                reset_login_attempts()
+                st.session_state["password_correct"] = True
+                st.session_state["current_floor"] = "3-etaj"
+                st.query_params["auth"] = "ok"
+                st.query_params["floor"] = "3-etaj"
+                send_successful_login_alert()
+                st.rerun()
+            else:
+                record_failed_login()
+                st.error("😕 Parol xato! Qaytadan urinib ko'ring.")
+                st.rerun()
                 
     return False
 
@@ -497,21 +865,250 @@ except Exception as e:
     st.error(f"Google Sheetga ulanishda xatolik: {e}")
     st.stop()
 
-# --- JORIY ETAJ KO'RSATISH ---
+# --- ZAMONAVIY HEADER ---
 current_config = get_current_config()
 floor_name = current_config.get("name", "4-etaj")
+
 st.markdown(f"""
-<div style="background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); 
-            padding: 10px 20px; border-radius: 10px; margin-bottom: 15px; 
-            text-align: center; color: white; font-weight: bold;">
-    🏢 {floor_name}
+<div style="
+    background: linear-gradient(135deg, rgba(0, 212, 170, 0.1) 0%, rgba(0, 206, 201, 0.1) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(0, 212, 170, 0.3);
+    border-radius: 20px;
+    padding: 25px 40px;
+    margin-bottom: 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 8px 32px rgba(0, 212, 170, 0.15);
+">
+    <div>
+        <h1 style="
+            margin: 0;
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(145deg, #ffffff, #00D4AA);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        ">🏢 Navbatchilik Tizimi</h1>
+        <p style="
+            margin: 5px 0 0 0;
+            color: #888;
+            font-size: 14px;
+        ">TTJ Yotoqxona Boshqaruv Paneli</p>
+    </div>
+    <div style="
+        background: linear-gradient(145deg, #00D4AA, #00B894);
+        padding: 12px 25px;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 212, 170, 0.4);
+    ">
+        <span style="
+            color: #0a0a0a;
+            font-weight: 700;
+            font-size: 16px;
+        ">📍 {floor_name}</span>
+    </div>
 </div>
 """, unsafe_allow_html=True)
 
-# --- TABLAR ---
-tab1, tab2, tab3, tab4 = st.tabs(["📝 Navbatchilik", "🛠️ Naryad", "📊 Statistika", "📨 Xabarlar"])
+# ============================================================================
+# 3D KARTALAR BILAN MENYU
+# ============================================================================
 
-with tab1:
+# Menyu kartalar uchun CSS
+st.markdown("""
+<style>
+    /* ===== 3D MENYU KARTALARI ===== */
+    .menu-container {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+        margin: 30px 0;
+        perspective: 1000px;
+    }
+    
+    @media (max-width: 768px) {
+        .menu-container {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+    }
+    
+    .menu-card {
+        background: linear-gradient(145deg, rgba(17, 17, 17, 0.9), rgba(30, 30, 30, 0.8));
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(0, 212, 170, 0.2);
+        border-radius: 20px;
+        padding: 30px 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        transform-style: preserve-3d;
+        box-shadow: 
+            0 10px 30px rgba(0, 0, 0, 0.3),
+            0 5px 15px rgba(0, 212, 170, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .menu-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+            90deg,
+            transparent,
+            rgba(0, 212, 170, 0.2),
+            transparent
+        );
+        transition: left 0.5s;
+    }
+    
+    .menu-card:hover::before {
+        left: 100%;
+    }
+    
+    .menu-card:hover {
+        transform: translateY(-15px) rotateX(10deg) scale(1.02);
+        border-color: rgba(0, 212, 170, 0.6);
+        box-shadow: 
+            0 25px 50px rgba(0, 0, 0, 0.4),
+            0 15px 30px rgba(0, 212, 170, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+    
+    .menu-card.active {
+        background: linear-gradient(145deg, rgba(0, 212, 170, 0.2), rgba(0, 206, 201, 0.15));
+        border-color: rgba(0, 212, 170, 0.8);
+        transform: translateY(-8px);
+        box-shadow: 
+            0 20px 40px rgba(0, 212, 170, 0.25),
+            0 10px 20px rgba(0, 0, 0, 0.3),
+            inset 0 0 30px rgba(0, 212, 170, 0.1);
+    }
+    
+    .menu-icon {
+        font-size: 48px;
+        margin-bottom: 15px;
+        display: block;
+        transform: translateZ(30px);
+        transition: transform 0.3s ease;
+    }
+    
+    .menu-card:hover .menu-icon {
+        transform: translateZ(50px) scale(1.2);
+    }
+    
+    .menu-title {
+        color: #ffffff;
+        font-size: 18px;
+        font-weight: 700;
+        margin: 0;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .menu-card.active .menu-title {
+        background: linear-gradient(145deg, #00D4AA, #00CEC9);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    .menu-desc {
+        color: #888;
+        font-size: 12px;
+        margin-top: 8px;
+    }
+    
+    .menu-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: linear-gradient(145deg, #00D4AA, #00B894);
+        color: #0a0a0a;
+        font-size: 11px;
+        font-weight: 700;
+        padding: 4px 10px;
+        border-radius: 20px;
+        box-shadow: 0 3px 10px rgba(0, 212, 170, 0.4);
+    }
+    
+    /* Glow Effect for Active Card */
+    .menu-card.active::after {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(
+            circle at center,
+            rgba(0, 212, 170, 0.1) 0%,
+            transparent 50%
+        );
+        animation: glow-pulse 3s infinite;
+        pointer-events: none;
+    }
+    
+    @keyframes glow-pulse {
+        0%, 100% { opacity: 0.5; transform: scale(1); }
+        50% { opacity: 1; transform: scale(1.1); }
+    }
+    
+    /* Section Divider */
+    .section-divider {
+        height: 2px;
+        background: linear-gradient(90deg, transparent, rgba(0, 212, 170, 0.5), transparent);
+        margin: 30px 0;
+        border-radius: 2px;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# Session state'da active menyu
+if "active_menu" not in st.session_state:
+    st.session_state.active_menu = "navbatchilik"
+
+# Query param orqali menyuni aniqlash
+if "menu" in st.query_params:
+    st.session_state.active_menu = st.query_params["menu"]
+
+# Streamlit radio orqali ham navigatsiya (fallback)
+col1, col2, col3, col4 = st.columns(4)
+with col1:
+    if st.button("📝 Navbatchilik", use_container_width=True, 
+                 type="primary" if st.session_state.active_menu == "navbatchilik" else "secondary"):
+        st.session_state.active_menu = "navbatchilik"
+        st.rerun()
+with col2:
+    if st.button("🛠️ Naryad", use_container_width=True,
+                 type="primary" if st.session_state.active_menu == "naryad" else "secondary"):
+        st.session_state.active_menu = "naryad"
+        st.rerun()
+with col3:
+    if st.button("📊 Statistika", use_container_width=True,
+                 type="primary" if st.session_state.active_menu == "statistika" else "secondary"):
+        st.session_state.active_menu = "statistika"
+        st.rerun()
+with col4:
+    if st.button("📨 Xabarlar", use_container_width=True,
+                 type="primary" if st.session_state.active_menu == "xabar" else "secondary"):
+        st.session_state.active_menu = "xabarlar"
+        st.rerun()
+
+st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
+
+# --- NAVBATCHILIK SAHIFASI ---
+if st.session_state.active_menu == "navbatchilik":
     # --- UI ---
     col1, col2 = st.columns([1, 3])
     with col1:
@@ -661,7 +1258,8 @@ with tab1:
     except Exception as e:
         st.warning(f"⚠️ SMS navbatini yuklashda xatolik: {e}")
 
-with tab2:
+# --- NARYAD SAHIFASI ---
+if st.session_state.active_menu == "naryad":
     st.subheader("🛠️ Naryad Taqsimoti")
     
     # --- UI ---
@@ -822,7 +1420,8 @@ with tab2:
     else:
         st.warning("Hozircha hech qanday ma'lumot yo'q.")
 
-with tab3:
+# --- STATISTIKA SAHIFASI ---
+if st.session_state.active_menu == "statistika":
     st.subheader("🏆 Navbatchilik Statistikasi")
     
     # Faqat sana ustunlarini ajratib olish (regex yordamida YYYY.MM.DD)
@@ -860,6 +1459,138 @@ with tab3:
         stats = stats.sort_values(by="Jami", ascending=False).reset_index(drop=True)
         
         st.dataframe(stats, use_container_width=True)
+        
+        # ============================================================================
+        # 📊 CHIROYLI GRAFIKLAR
+        # ============================================================================
+        st.markdown("---")
+        st.subheader("📈 Grafiklar")
+        
+        # Top 10 talaba - Bar Chart
+        top_10 = stats.head(10)
+        
+        col_chart1, col_chart2 = st.columns(2)
+        
+        with col_chart1:
+            st.markdown("##### 🏆 Top 10 Faol Talabalar")
+            fig_bar = go.Figure()
+            
+            fig_bar.add_trace(go.Bar(
+                name='Navbatchilik',
+                x=top_10['ism familiya'],
+                y=top_10['Navbatchilik'],
+                marker_color='#00D4AA',
+                text=top_10['Navbatchilik'],
+                textposition='auto'
+            ))
+            
+            fig_bar.add_trace(go.Bar(
+                name='Naryad',
+                x=top_10['ism familiya'],
+                y=top_10['Naryad'],
+                marker_color='#FF6B6B',
+                text=top_10['Naryad'],
+                textposition='auto'
+            ))
+            
+            fig_bar.update_layout(
+                barmode='stack',
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(0,0,0,0)',
+                font=dict(color='white'),
+                xaxis=dict(
+                    tickangle=-45,
+                    gridcolor='rgba(255,255,255,0.1)'
+                ),
+                yaxis=dict(gridcolor='rgba(255,255,255,0.1)'),
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.02,
+                    xanchor="right",
+                    x=1
+                ),
+                margin=dict(l=20, r=20, t=40, b=100),
+                height=400
+            )
+            
+            st.plotly_chart(fig_bar, use_container_width=True)
+        
+        with col_chart2:
+            st.markdown("##### 🥧 Navbatchilik vs Naryad")
+            
+            total_navbat = stats['Navbatchilik'].sum()
+            total_naryad = stats['Naryad'].sum()
+            
+            fig_pie = go.Figure(data=[go.Pie(
+                labels=['Navbatchilik', 'Naryad'],
+                values=[total_navbat, total_naryad],
+                hole=0.5,
+                marker=dict(colors=['#00D4AA', '#FF6B6B']),
+                textinfo='label+percent',
+                textfont=dict(size=14, color='white'),
+                hovertemplate='%{label}: %{value}<extra></extra>'
+            )])
+            
+            fig_pie.update_layout(
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(0,0,0,0)',
+                font=dict(color='white'),
+                showlegend=True,
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=-0.1,
+                    xanchor="center",
+                    x=0.5
+                ),
+                margin=dict(l=20, r=20, t=40, b=60),
+                height=400,
+                annotations=[dict(
+                    text=f'Jami<br>{total_navbat + total_naryad}',
+                    x=0.5, y=0.5,
+                    font_size=18,
+                    font_color='#00D4AA',
+                    showarrow=False
+                )]
+            )
+            
+            st.plotly_chart(fig_pie, use_container_width=True)
+        
+        # Umumiy statistika kartalar
+        st.markdown("---")
+        st.markdown("##### 📊 Umumiy Ko'rsatkichlar")
+        
+        metric_col1, metric_col2, metric_col3, metric_col4 = st.columns(4)
+        
+        with metric_col1:
+            st.metric(
+                label="👥 Jami Talabalar",
+                value=len(stats),
+                delta=None
+            )
+        
+        with metric_col2:
+            st.metric(
+                label="📝 Navbatchiliklar",
+                value=total_navbat,
+                delta=None
+            )
+        
+        with metric_col3:
+            st.metric(
+                label="🛠️ Naryadlar",
+                value=total_naryad,
+                delta=None
+            )
+        
+        with metric_col4:
+            avg_per_student = round((total_navbat + total_naryad) / len(stats), 1) if len(stats) > 0 else 0
+            st.metric(
+                label="📈 O'rtacha (1 talaba)",
+                value=avg_per_student,
+                delta=None
+            )
     
     # ============================================================================
     # XONALAR BO'YICHA STATISTIKA
@@ -1001,7 +1732,8 @@ with tab3:
 # ============================================================================
 # XABARLAR BO'LIMI - SMS Yuborish
 # ============================================================================
-with tab4:
+# --- XABARLAR SAHIFASI ---
+if st.session_state.active_menu == "xabarlar":
     st.subheader("📨 Xabarlar - Tanlangan Talabalarga SMS Yuborish")
     st.info("📌 Xabar yozing va qaysi talabalarga yuborishni tanlang. SMS navbatga qo'shiladi.")
     
