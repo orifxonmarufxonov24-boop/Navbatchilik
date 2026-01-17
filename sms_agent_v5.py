@@ -204,25 +204,34 @@ def process_sms_queue(client):
                     error_count += 1
                     continue
                 
+                # Talaba ismini olish
+                student_name = row[4] if len(row) > 4 else ""
+                
                 # SMS yuborish
                 if send_sms(clean_phone, message):
                     queue_sheet.update_cell(row_idx + 1, 3, "SENT")
                     sent_count += 1
+                    # Har bir SMS yuborilganda Telegramga xabar
+                    send_telegram(f"✅ SMS yuborildi: {student_name} ({clean_phone[-4:]})")
                 else:
                     queue_sheet.update_cell(row_idx + 1, 3, "ERROR")
                     error_count += 1
+                    send_telegram(f"❌ SMS xato: {student_name} ({clean_phone[-4:]})")
                 
                 # SMSlar orasida kutish
                 time.sleep(SMS_DELAY)
             
+            # Etaj bo'yicha yakuniy xabar
             if sent_count > 0 or error_count > 0:
                 log(f"{floor_name}: {sent_count} yuborildi, {error_count} xato")
+                send_telegram(f"📊 {floor_name}: {sent_count} ta SMS yuborildi, {error_count} ta xato")
             
             total_sent += sent_count
             total_errors += error_count
             
         except Exception as e:
             log(f"{floor_name} xatosi: {e}", "ERROR")
+            send_telegram(f"⚠️ {floor_name} xatosi: {e}")
     
     return total_sent, total_errors
 
