@@ -858,9 +858,36 @@ def add_to_sms_queue(queue_sheet, phone, message, student_name=""):
 # --- MA'LUMOTNI O'QISH ---
 try:
     sheet = get_main_sheet()
-    data = sheet.get_all_records()
-    df = pd.DataFrame(data)
-    df['telefon raqami'] = df['telefon raqami'].astype(str).str.replace(".0", "", regex=False)
+    
+    # get_all_records() o'rniga get_all_values() ishlatamiz (duplicate header muammosi uchun)
+    all_values = sheet.get_all_values()
+    
+    if not all_values:
+        st.error("Jadval bo'sh!")
+        st.stop()
+        
+    # Headerlarni olish
+    headers = all_values[0]
+    
+    # Bugungi sana headerda bormi?
+    # Dublikatlarni tekshirish va to'g'irlash
+    unique_headers = []
+    seen = {}
+    
+    for h in headers:
+        if h in seen:
+            seen[h] += 1
+            unique_headers.append(f"{h}_{seen[h]}")
+        else:
+            seen[h] = 0
+            unique_headers.append(h)
+            
+    # DataFrame yaratish
+    df = pd.DataFrame(all_values[1:], columns=unique_headers)
+    
+    # Telefon raqamini tozalash
+    if 'telefon raqami' in df.columns:
+        df['telefon raqami'] = df['telefon raqami'].astype(str).str.replace(".0", "", regex=False)
 except Exception as e:
     st.error(f"Google Sheetga ulanishda xatolik: {e}")
     st.stop()
@@ -1232,16 +1259,25 @@ if st.session_state.active_menu == "navbatchilik":
         qs = get_queue_sheet()
         # Ustun nomlarini belgilash (endi ETAJ yo'q)
         expected_headers = ["TELEFON", "XABAR", "STATUS", "VAQT", "ISM"]
-        try:
-            q_data = qs.get_all_records(expected_headers=expected_headers)
-        except:
-            # Eski format bilan sinab ko'rish
-            q_data = qs.get_all_values()
-            if len(q_data) > 1:
-                headers = q_data[0] if q_data[0][0] else expected_headers
-                q_data = [dict(zip(expected_headers, row)) for row in q_data[1:]]
-            else:
-                q_data = []
+        
+        # get_all_records o'rniga get_all_values ishlatamiz
+        all_q_values = qs.get_all_values()
+        
+        q_data = []
+        if len(all_q_values) > 1:
+            # Headerlarni tekshirish (agar birinchi qator header bo'lmasa)
+            current_headers = all_q_values[0]
+            # Agar headerlar kutilganidek bo'lsa, 1-qatordan boshlab ma'lumotni olamiz
+            # Aks holda, hammasini ma'lumot deb olamiz (lekin bu xavfli)
+            
+            # Oddiy yondashuv: Har doim 1-qator header deb faraz qilamiz
+            # Va har bir qatorni expected_headers'ga map qilamiz
+            for row in all_q_values[1:]:
+                # Qator uzunligi headerlar soniga to'g'ri kelmasa, to'ldiramiz yoki qirqamiz
+                if len(row) < len(expected_headers):
+                    row += [""] * (len(expected_headers) - len(row))
+                item = dict(zip(expected_headers, row[:len(expected_headers)]))
+                q_data.append(item)
         
         if q_data and len(q_data) > 0:
             queue_df = pd.DataFrame(q_data)

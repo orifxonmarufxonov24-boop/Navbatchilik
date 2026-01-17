@@ -6,7 +6,10 @@ import os
 import subprocess
 
 # --- SOZLAMALAR ---
-GOOGLE_SHEET_NAME = "Navbatchilik_Jadvali"
+FLOOR_SHEETS = {
+    "4-etaj": "Navbatchilik_Jadvali",
+    "3-etaj": "TTJ 3-etaj Navbatchilik"
+}
 CREDS_FILE = "credentials.json"
 TELEGRAM_TOKEN = "8259734572:AAGeJLKmmruLByDjx81gdi1VcjNt3ZnX894"
 ADMIN_CHAT_ID = "7693191223"
@@ -45,47 +48,67 @@ def send_sms_via_termux(phone, message):
         print(f"SMS Error: {e}")
         return False
 
-print("SMS AGENT (v4.0 - STABLE)...")
-send_telegram("Agent ishga tushdi (v4.0)...")
+print("SMS AGENT (v4.1 - MULTI-FLOOR)...")
+send_telegram("Agent ishga tushdi (v4.1 - 4 va 3 etaj)...")
 
 # --- ASOSIY LOOP ---
 while True:
     try:
         client = get_client()
-        spreadsheet = client.open(GOOGLE_SHEET_NAME)
-        queue_sheet = spreadsheet.worksheet("SMS_QUEUE")
-        queue_data = queue_sheet.get_all_values()
+        total_sms_sent = 0
         
-        sms_count = 0
-        
-        for r_idx, row in enumerate(queue_data):
-            if r_idx == 0 or len(row) < 3:
-                continue
-            
-            if row[2] == "PENDING":
-                phone, msg = row[0], row[1]
-                print(f"SMS: {phone}")
-                
+        # Har bir etajni tekshirish
+        for floor_name, sheet_name in FLOOR_SHEETS.items():
+            try:
+                # Sheetni ochish
+                spreadsheet = client.open(sheet_name)
                 try:
-                    if send_sms_via_termux(phone, msg):
-                        queue_sheet.update_cell(r_idx + 1, 3, "SENT")
-                        sms_count += 1
-                        print(f"OK: {phone}")
-                    else:
-                        queue_sheet.update_cell(r_idx + 1, 3, "ERROR")
-                        print(f"ERROR: {phone}")
-                except Exception as e:
-                    print(f"Update error: {e}")
+                    queue_sheet = spreadsheet.worksheet("SMS_QUEUE")
+                except:
+                    # Agar SMS_QUEUE bo'lmasa, keyingi etajga o'tish
+                    continue
+                    
+                queue_data = queue_sheet.get_all_values()
                 
-                # Har bir SMS orasida 2 sekund kutish
-                time.sleep(2)
+                # Header bormi?
+                if len(queue_data) <= 1:
+                    continue
+                
+                for r_idx, row in enumerate(queue_data):
+                    # Header va bo'sh qatorlarni o'tkazib yuborish
+                    if r_idx == 0 or len(row) < 3:
+                        continue
+                    
+                    if row[2] == "PENDING":
+                        phone, msg = row[0], row[1]
+                        print(f"[{floor_name}] SMS: {phone}")
+                        
+                        try:
+                            if send_sms_via_termux(phone, msg):
+                                queue_sheet.update_cell(r_idx + 1, 3, "SENT")
+                                total_sms_sent += 1
+                                print(f"OK: {phone}")
+                            else:
+                                queue_sheet.update_cell(r_idx + 1, 3, "ERROR")
+                                print(f"ERROR: {phone}")
+                        except Exception as e:
+                            print(f"Update error: {e}")
+                            # Agar xato bo'lsa, statusni ERROR ga o'zgartirib qo'yamiz
+                            # queue_sheet.update_cell(r_idx + 1, 3, "ERROR")
+                        
+                        # Har bir SMS orasida 3 sekund kutish
+                        time.sleep(3)
+                        
+            except Exception as e_inner:
+                print(f"Error processing {floor_name}: {e_inner}")
+                continue
         
-        if sms_count > 0:
-            send_telegram(f"{sms_count} ta SMS yuborildi!")
+        if total_sms_sent > 0:
+            send_telegram(f"✅ Jami {total_sms_sent} ta SMS yuborildi!")
         
-        # 10 sekund kutish
+        # 10 sekund kutish (keyingi tekshiruvgacha)
         time.sleep(10)
         
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Global Error: {e}")
         time.sleep(10)
