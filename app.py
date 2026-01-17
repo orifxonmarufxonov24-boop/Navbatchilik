@@ -451,15 +451,17 @@ def get_main_sheet():
     return get_client().open(sheet_name).sheet1
 
 def get_queue_sheet():
-    """SMS navbati - har doim 4-etaj Sheet'da saqlanadi (agent bitta joyni ko'rsin)"""
+    """SMS navbati - har bir etajning o'z Sheet'ida saqlanadi (alohida)"""
     client = get_client()
-    # SMS navbati har doim asosiy Sheet'da (4-etaj)
-    main_sheet_name = FLOOR_CONFIG["4-etaj"]["sheet_name"]
+    # Joriy etajning Sheet nomini olish
+    current_floor = get_current_floor()
+    sheet_name = FLOOR_CONFIG[current_floor]["sheet_name"]
     try:
-        return client.open(main_sheet_name).worksheet("SMS_QUEUE")
+        return client.open(sheet_name).worksheet("SMS_QUEUE")
     except:
-        ws = client.open(main_sheet_name).add_worksheet(title="SMS_QUEUE", rows="500", cols="6")
-        ws.append_row(["TELEFON", "XABAR", "STATUS", "VAQT", "ISM", "ETAJ"])
+        # SMS_QUEUE sahifasi yo'q bo'lsa, yaratish
+        ws = client.open(sheet_name).add_worksheet(title="SMS_QUEUE", rows="500", cols="6")
+        ws.append_row(["TELEFON", "XABAR", "STATUS", "VAQT", "ISM"])
         return ws
 
 def validate_phone(phone):
@@ -481,9 +483,8 @@ def add_to_sms_queue(queue_sheet, phone, message, student_name=""):
     if not clean_phone:
         return False
     timestamp = (datetime.now() + timedelta(hours=5)).strftime("%Y-%m-%d %H:%M:%S")
-    # Joriy etajni ham saqlash
-    current_floor = get_current_floor()
-    queue_sheet.append_row([clean_phone, message, "PENDING", timestamp, student_name, current_floor])
+    # Endi ETAJ ustuni kerak emas - har bir etaj o'z sheet'ida
+    queue_sheet.append_row([clean_phone, message, "PENDING", timestamp, student_name])
     return True
 
 # --- MA'LUMOTNI O'QISH ---
@@ -632,8 +633,8 @@ with tab1:
     st.subheader(f"📨 SMS Navbati Statusi ({floor_name})")
     try:
         qs = get_queue_sheet()
-        # Ustun nomlarini belgilash
-        expected_headers = ["TELEFON", "XABAR", "STATUS", "VAQT", "ISM", "ETAJ"]
+        # Ustun nomlarini belgilash (endi ETAJ yo'q)
+        expected_headers = ["TELEFON", "XABAR", "STATUS", "VAQT", "ISM"]
         try:
             q_data = qs.get_all_records(expected_headers=expected_headers)
         except:
@@ -648,18 +649,9 @@ with tab1:
         if q_data and len(q_data) > 0:
             queue_df = pd.DataFrame(q_data)
             
-            # Joriy etaj bo'yicha filtr
-            current_floor = get_current_floor()
-            if "ETAJ" in queue_df.columns:
-                # Bo'sh bo'lmagan ETAJ larni filtr qilish
-                queue_df = queue_df[queue_df["ETAJ"].astype(str).str.strip() == current_floor]
-            
             if len(queue_df) > 0:
                 # Tarixni teskarisiga aylantiramiz (eng yangisi tepada)
                 queue_df = queue_df[::-1]
-                # ETAJ ustunini yashirish
-                if "ETAJ" in queue_df.columns:
-                    queue_df = queue_df.drop(columns=["ETAJ"])
                 st.dataframe(queue_df, use_container_width=True, height=300)
                 st.caption(f"📊 Jami: {len(queue_df)} ta xabar")
             else:

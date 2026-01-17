@@ -37,7 +37,12 @@ except ImportError as e:
 # =============================================================================
 # SOZLAMALAR
 # =============================================================================
-GOOGLE_SHEET_NAME = "Navbatchilik_Jadvali"
+# Etajlar konfiguratsiyasi - har biri o'z Sheet'ida
+FLOOR_SHEETS = {
+    "4-etaj": "Navbatchilik_Jadvali",
+    "3-etaj": "TTJ 3-etaj Navbatchilik"
+}
+
 CREDS_FILE = os.path.expanduser("~/credentials.json")
 TELEGRAM_TOKEN = "8259734572:AAGeJLKmmruLByDjx81gdi1VcjNt3ZnX894"
 ADMIN_CHAT_ID = "7693191223"
@@ -149,67 +154,77 @@ def get_google_client():
         return None
 
 def process_sms_queue(client):
-    """SMS navbatini qayta ishlash"""
-    try:
-        spreadsheet = client.open(GOOGLE_SHEET_NAME)
-        
-        # SMS_QUEUE sahifasini olish
+    """SMS navbatini qayta ishlash - barcha etajlarni tekshirish"""
+    total_sent = 0
+    total_errors = 0
+    
+    # Har bir etajning SMS navbatini tekshirish
+    for floor_name, sheet_name in FLOOR_SHEETS.items():
         try:
-            queue_sheet = spreadsheet.worksheet("SMS_QUEUE")
-        except:
-            log("SMS_QUEUE sahifasi topilmadi", "WARN")
-            return 0, 0
-        
-        # Barcha ma'lumotlarni olish
-        all_data = queue_sheet.get_all_values()
-        
-        if len(all_data) <= 1:
-            return 0, 0  # Faqat header bor
-        
-        sent_count = 0
-        error_count = 0
-        
-        for row_idx, row in enumerate(all_data):
-            # Birinchi qator - header
-            if row_idx == 0:
+            spreadsheet = client.open(sheet_name)
+            
+            # SMS_QUEUE sahifasini olish
+            try:
+                queue_sheet = spreadsheet.worksheet("SMS_QUEUE")
+            except:
+                log(f"{floor_name}: SMS_QUEUE topilmadi", "WARN")
                 continue
             
-            # Qator uzunligini tekshirish
-            if len(row) < 3:
-                continue
+            # Barcha ma'lumotlarni olish
+            all_data = queue_sheet.get_all_values()
             
-            phone = row[0]
-            message = row[1]
-            status = row[2]
+            if len(all_data) <= 1:
+                continue  # Faqat header bor
             
-            # Faqat PENDING statusli SMSlarni yuborish
-            if status != "PENDING":
-                continue
+            sent_count = 0
+            error_count = 0
             
-            # Telefon raqamini tekshirish
-            clean_phone = validate_phone(phone)
-            if not clean_phone:
-                log(f"Noto'g'ri raqam, o'tkazildi: {phone}", "WARN")
-                queue_sheet.update_cell(row_idx + 1, 3, "INVALID_PHONE")
-                error_count += 1
-                continue
+            for row_idx, row in enumerate(all_data):
+                # Birinchi qator - header
+                if row_idx == 0:
+                    continue
+                
+                # Qator uzunligini tekshirish
+                if len(row) < 3:
+                    continue
+                
+                phone = row[0]
+                message = row[1]
+                status = row[2]
+                
+                # Faqat PENDING statusli SMSlarni yuborish
+                if status != "PENDING":
+                    continue
+                
+                # Telefon raqamini tekshirish
+                clean_phone = validate_phone(phone)
+                if not clean_phone:
+                    log(f"Noto'g'ri raqam, o'tkazildi: {phone}", "WARN")
+                    queue_sheet.update_cell(row_idx + 1, 3, "INVALID_PHONE")
+                    error_count += 1
+                    continue
+                
+                # SMS yuborish
+                if send_sms(clean_phone, message):
+                    queue_sheet.update_cell(row_idx + 1, 3, "SENT")
+                    sent_count += 1
+                else:
+                    queue_sheet.update_cell(row_idx + 1, 3, "ERROR")
+                    error_count += 1
+                
+                # SMSlar orasida kutish
+                time.sleep(SMS_DELAY)
             
-            # SMS yuborish
-            if send_sms(clean_phone, message):
-                queue_sheet.update_cell(row_idx + 1, 3, "SENT")
-                sent_count += 1
-            else:
-                queue_sheet.update_cell(row_idx + 1, 3, "ERROR")
-                error_count += 1
+            if sent_count > 0 or error_count > 0:
+                log(f"{floor_name}: {sent_count} yuborildi, {error_count} xato")
             
-            # SMSlar orasida kutish
-            time.sleep(SMS_DELAY)
-        
-        return sent_count, error_count
-        
-    except Exception as e:
-        log(f"Queue xatosi: {e}", "ERROR")
-        return 0, 0
+            total_sent += sent_count
+            total_errors += error_count
+            
+        except Exception as e:
+            log(f"{floor_name} xatosi: {e}", "ERROR")
+    
+    return total_sent, total_errors
 
 # =============================================================================
 # ASOSIY LOOP
